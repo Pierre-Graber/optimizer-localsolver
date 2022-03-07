@@ -1,0 +1,38 @@
+{
+    // Utilisez IntelliSense pour en savoir plus sur les attributs possibles.
+    // Pointez pour afficher la description des attributs existants.
+    // Pour plus d'informations, visitez : https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "(gdb) Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/tsp_localsolver",
+            "args": [ 
+                        "-instance_file", "${workspaceFolder}/instance_licent_localsolver",
+                        "-solution_file", "/tmp/optimize-localsolver-output20180712-13097-xp90cp"
+                    ],
+            "cwd": "${workspaceFolder}",
+            "environment": [
+               {"name":"LSAN_OPTIONS", "value":"verbosity=1:log_threads=1"}
+            //    {"name":"LD_LIBRARY_PATH", "value":"../optimizer-localsolver/dependencies/install/lib/:../localsolver_8_0/include/"}
+            ],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "python import sys;sys.path.insert(0, '/usr/share/gcc/python');from libstdcxx.v6.printers import register_libstdcxx_printers;register_libstdcxx_printers(None)",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "build & debug file"
+        }
+    ]
+}

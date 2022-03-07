@@ -1,0 +1,28 @@
+{
+    "tasks": [
+        {
+            "label": "build & debug file",
+            "type": "shell",
+            "command": "/usr/bin/make",
+            "args": ["-j3", "tsp_localsolver"],
+            "problemMatcher": "$gcc",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "clean",
+            "type": "shell",
+            "command": "/usr/bin/make",
+            "args": [
+                "clean_local"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+        }
+    ],
+    "version": "2.0.0"
+}

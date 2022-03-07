@@ -1,0 +1,30 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "/usr/include",
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/../or-tools/**",
+                "/opt/localsolver_10_5/**"
+            ],
+            "defines": [
+                "DEBUG"
+            ],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "browse": {
+                "path": [
+                    "/usr/include",
+                    "${workspaceFolder}",
+                    "${workspaceFolder}/../or-tools",
+                    "/opt/localsolver_10_5/include"
+                ],
+                "limitSymbolsToIncludedHeaders": true,
+                "databaseFilename": ""
+            }
+        }
+    ],
+    "version": 4
+}
