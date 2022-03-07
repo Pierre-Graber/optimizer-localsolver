@@ -48,9 +48,8 @@ tsp_localsolver: tsp_localsolver.o localsolver_vrp.pb.o localsolver_result.pb.o
 	-o tsp_localsolver
 
 
-local_clean:
-	rm -f *.pb.cc *.pb.h
-	rm *.o
+clean:
+	rm -f *.pb.cc *.pb.h *.o
 
-mrproper: local_clean
+mrproper: clean
 	rm tsp_localsolver
