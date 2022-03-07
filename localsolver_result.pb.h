@@ -47,7 +47,7 @@ struct TableStruct_localsolver_5fresult_2eproto {
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
   static const ::PROTOBUF_NAMESPACE_ID::internal::AuxillaryParseTableField aux[]
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
-  static const ::PROTOBUF_NAMESPACE_ID::internal::ParseTable schema[3]
+  static const ::PROTOBUF_NAMESPACE_ID::internal::ParseTable schema[4]
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
   static const ::PROTOBUF_NAMESPACE_ID::internal::FieldMetadata field_metadata[];
   static const ::PROTOBUF_NAMESPACE_ID::internal::SerializationTable serialization_table[];
@@ -58,6 +58,9 @@ namespace localsolver_result {
 class Activity;
 class ActivityDefaultTypeInternal;
 extern ActivityDefaultTypeInternal _Activity_default_instance_;
+class CostDetails;
+class CostDetailsDefaultTypeInternal;
+extern CostDetailsDefaultTypeInternal _CostDetails_default_instance_;
 class Result;
 class ResultDefaultTypeInternal;
 extern ResultDefaultTypeInternal _Result_default_instance_;
@@ -67,6 +70,7 @@ extern RouteDefaultTypeInternal _Route_default_instance_;
 }  // namespace localsolver_result
 PROTOBUF_NAMESPACE_OPEN
 template<> ::localsolver_result::Activity* Arena::CreateMaybeMessage<::localsolver_result::Activity>(Arena*);
+template<> ::localsolver_result::CostDetails* Arena::CreateMaybeMessage<::localsolver_result::CostDetails>(Arena*);
 template<> ::localsolver_result::Result* Arena::CreateMaybeMessage<::localsolver_result::Result>(Arena*);
 template<> ::localsolver_result::Route* Arena::CreateMaybeMessage<::localsolver_result::Route>(Arena*);
 PROTOBUF_NAMESPACE_CLOSE
@@ -189,29 +193,33 @@ class Activity PROTOBUF_FINAL :
   enum : int {
     kQuantitiesFieldNumber = 2,
     kTypeFieldNumber = 4,
+    kIdFieldNumber = 7,
     kIndexFieldNumber = 1,
     kStartTimeFieldNumber = 3,
+    kAlternativeFieldNumber = 5,
+    kCurrentDistanceFieldNumber = 6,
+    kLatenessFieldNumber = 8,
   };
-  // repeated int32 quantities = 2;
+  // repeated float quantities = 2;
   int quantities_size() const;
   private:
   int _internal_quantities_size() const;
   public:
   void clear_quantities();
   private:
-  ::PROTOBUF_NAMESPACE_ID::int32 _internal_quantities(int index) const;
-  const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::int32 >&
+  float _internal_quantities(int index) const;
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedField< float >&
       _internal_quantities() const;
-  void _internal_add_quantities(::PROTOBUF_NAMESPACE_ID::int32 value);
-  ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::int32 >*
+  void _internal_add_quantities(float value);
+  ::PROTOBUF_NAMESPACE_ID::RepeatedField< float >*
       _internal_mutable_quantities();
   public:
-  ::PROTOBUF_NAMESPACE_ID::int32 quantities(int index) const;
-  void set_quantities(int index, ::PROTOBUF_NAMESPACE_ID::int32 value);
-  void add_quantities(::PROTOBUF_NAMESPACE_ID::int32 value);
-  const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::int32 >&
+  float quantities(int index) const;
+  void set_quantities(int index, float value);
+  void add_quantities(float value);
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedField< float >&
       quantities() const;
-  ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::int32 >*
+  ::PROTOBUF_NAMESPACE_ID::RepeatedField< float >*
       mutable_quantities();
 
   // string type = 4;
@@ -239,6 +247,31 @@ class Activity PROTOBUF_FINAL :
   std::string* _internal_mutable_type();
   public:
 
+  // string id = 7;
+  void clear_id();
+  const std::string& id() const;
+  void set_id(const std::string& value);
+  void set_id(std::string&& value);
+  void set_id(const char* value);
+  void set_id(const char* value, size_t size);
+  std::string* mutable_id();
+  std::string* release_id();
+  void set_allocated_id(std::string* id);
+  GOOGLE_PROTOBUF_RUNTIME_DEPRECATED("The unsafe_arena_ accessors for"
+  "    string fields are deprecated and will be removed in a"
+  "    future release.")
+  std::string* unsafe_arena_release_id();
+  GOOGLE_PROTOBUF_RUNTIME_DEPRECATED("The unsafe_arena_ accessors for"
+  "    string fields are deprecated and will be removed in a"
+  "    future release.")
+  void unsafe_arena_set_allocated_id(
+      std::string* id);
+  private:
+  const std::string& _internal_id() const;
+  void _internal_set_id(const std::string& value);
+  std::string* _internal_mutable_id();
+  public:
+
   // int32 index = 1;
   void clear_index();
   ::PROTOBUF_NAMESPACE_ID::int32 index() const;
@@ -257,6 +290,33 @@ class Activity PROTOBUF_FINAL :
   void _internal_set_start_time(::PROTOBUF_NAMESPACE_ID::int32 value);
   public:
 
+  // int32 alternative = 5;
+  void clear_alternative();
+  ::PROTOBUF_NAMESPACE_ID::int32 alternative() const;
+  void set_alternative(::PROTOBUF_NAMESPACE_ID::int32 value);
+  private:
+  ::PROTOBUF_NAMESPACE_ID::int32 _internal_alternative() const;
+  void _internal_set_alternative(::PROTOBUF_NAMESPACE_ID::int32 value);
+  public:
+
+  // int32 current_distance = 6;
+  void clear_current_distance();
+  ::PROTOBUF_NAMESPACE_ID::int32 current_distance() const;
+  void set_current_distance(::PROTOBUF_NAMESPACE_ID::int32 value);
+  private:
+  ::PROTOBUF_NAMESPACE_ID::int32 _internal_current_distance() const;
+  void _internal_set_current_distance(::PROTOBUF_NAMESPACE_ID::int32 value);
+  public:
+
+  // int64 lateness = 8;
+  void clear_lateness();
+  ::PROTOBUF_NAMESPACE_ID::int64 lateness() const;
+  void set_lateness(::PROTOBUF_NAMESPACE_ID::int64 value);
+  private:
+  ::PROTOBUF_NAMESPACE_ID::int64 _internal_lateness() const;
+  void _internal_set_lateness(::PROTOBUF_NAMESPACE_ID::int64 value);
+  public:
+
   // @@protoc_insertion_point(class_scope:localsolver_result.Activity)
  private:
   class _Internal;
@@ -264,11 +324,284 @@ class Activity PROTOBUF_FINAL :
   template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
-  ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::int32 > quantities_;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedField< float > quantities_;
   mutable std::atomic<int> _quantities_cached_byte_size_;
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr type_;
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr id_;
   ::PROTOBUF_NAMESPACE_ID::int32 index_;
   ::PROTOBUF_NAMESPACE_ID::int32 start_time_;
+  ::PROTOBUF_NAMESPACE_ID::int32 alternative_;
+  ::PROTOBUF_NAMESPACE_ID::int32 current_distance_;
+  ::PROTOBUF_NAMESPACE_ID::int64 lateness_;
+  mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  friend struct ::TableStruct_localsolver_5fresult_2eproto;
+};
+// -------------------------------------------------------------------
+
+class CostDetails PROTOBUF_FINAL :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:localsolver_result.CostDetails) */ {
+ public:
+  inline CostDetails() : CostDetails(nullptr) {};
+  virtual ~CostDetails();
+
+  CostDetails(const CostDetails& from);
+  CostDetails(CostDetails&& from) noexcept
+    : CostDetails() {
+    *this = ::std::move(from);
+  }
+
+  inline CostDetails& operator=(const CostDetails& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline CostDetails& operator=(CostDetails&& from) noexcept {
+    if (GetArena() == from.GetArena()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return GetMetadataStatic().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return GetMetadataStatic().reflection;
+  }
+  static const CostDetails& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const CostDetails* internal_default_instance() {
+    return reinterpret_cast<const CostDetails*>(
+               &_CostDetails_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    1;
+
+  friend void swap(CostDetails& a, CostDetails& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(CostDetails* other) {
+    if (other == this) return;
+    if (GetArena() == other->GetArena()) {
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(CostDetails* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline CostDetails* New() const final {
+    return CreateMaybeMessage<CostDetails>(nullptr);
+  }
+
+  CostDetails* New(::PROTOBUF_NAMESPACE_ID::Arena* arena) const final {
+    return CreateMaybeMessage<CostDetails>(arena);
+  }
+  void CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) final;
+  void MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) final;
+  void CopyFrom(const CostDetails& from);
+  void MergeFrom(const CostDetails& from);
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  ::PROTOBUF_NAMESPACE_ID::uint8* _InternalSerialize(
+      ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  inline void SharedCtor();
+  inline void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(CostDetails* other);
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "localsolver_result.CostDetails";
+  }
+  protected:
+  explicit CostDetails(::PROTOBUF_NAMESPACE_ID::Arena* arena);
+  private:
+  static void ArenaDtor(void* object);
+  inline void RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena* arena);
+  public:
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+  private:
+  static ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadataStatic() {
+    ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&::descriptor_table_localsolver_5fresult_2eproto);
+    return ::descriptor_table_localsolver_5fresult_2eproto.file_level_metadata[kIndexInFileMessages];
+  }
+
+  public:
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kFixedFieldNumber = 1,
+    kDistanceFieldNumber = 2,
+    kDistanceBalanceFieldNumber = 3,
+    kDistanceFakeFieldNumber = 4,
+    kDistanceOrderFieldNumber = 5,
+    kTimeFieldNumber = 6,
+    kTimeBalanceFieldNumber = 7,
+    kTimeFakeFieldNumber = 8,
+    kTimeOrderFieldNumber = 9,
+    kTimeWithoutWaitFieldNumber = 10,
+    kValueFieldNumber = 11,
+    kLatenessFieldNumber = 12,
+    kOverloadFieldNumber = 13,
+  };
+  // float fixed = 1;
+  void clear_fixed();
+  float fixed() const;
+  void set_fixed(float value);
+  private:
+  float _internal_fixed() const;
+  void _internal_set_fixed(float value);
+  public:
+
+  // float distance = 2;
+  void clear_distance();
+  float distance() const;
+  void set_distance(float value);
+  private:
+  float _internal_distance() const;
+  void _internal_set_distance(float value);
+  public:
+
+  // float distance_balance = 3;
+  void clear_distance_balance();
+  float distance_balance() const;
+  void set_distance_balance(float value);
+  private:
+  float _internal_distance_balance() const;
+  void _internal_set_distance_balance(float value);
+  public:
+
+  // float distance_fake = 4;
+  void clear_distance_fake();
+  float distance_fake() const;
+  void set_distance_fake(float value);
+  private:
+  float _internal_distance_fake() const;
+  void _internal_set_distance_fake(float value);
+  public:
+
+  // float distance_order = 5;
+  void clear_distance_order();
+  float distance_order() const;
+  void set_distance_order(float value);
+  private:
+  float _internal_distance_order() const;
+  void _internal_set_distance_order(float value);
+  public:
+
+  // float time = 6;
+  void clear_time();
+  float time() const;
+  void set_time(float value);
+  private:
+  float _internal_time() const;
+  void _internal_set_time(float value);
+  public:
+
+  // float time_balance = 7;
+  void clear_time_balance();
+  float time_balance() const;
+  void set_time_balance(float value);
+  private:
+  float _internal_time_balance() const;
+  void _internal_set_time_balance(float value);
+  public:
+
+  // float time_fake = 8;
+  void clear_time_fake();
+  float time_fake() const;
+  void set_time_fake(float value);
+  private:
+  float _internal_time_fake() const;
+  void _internal_set_time_fake(float value);
+  public:
+
+  // float time_order = 9;
+  void clear_time_order();
+  float time_order() const;
+  void set_time_order(float value);
+  private:
+  float _internal_time_order() const;
+  void _internal_set_time_order(float value);
+  public:
+
+  // float time_without_wait = 10;
+  void clear_time_without_wait();
+  float time_without_wait() const;
+  void set_time_without_wait(float value);
+  private:
+  float _internal_time_without_wait() const;
+  void _internal_set_time_without_wait(float value);
+  public:
+
+  // float value = 11;
+  void clear_value();
+  float value() const;
+  void set_value(float value);
+  private:
+  float _internal_value() const;
+  void _internal_set_value(float value);
+  public:
+
+  // float lateness = 12;
+  void clear_lateness();
+  float lateness() const;
+  void set_lateness(float value);
+  private:
+  float _internal_lateness() const;
+  void _internal_set_lateness(float value);
+  public:
+
+  // float overload = 13;
+  void clear_overload();
+  float overload() const;
+  void set_overload(float value);
+  private:
+  float _internal_overload() const;
+  void _internal_set_overload(float value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:localsolver_result.CostDetails)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  float fixed_;
+  float distance_;
+  float distance_balance_;
+  float distance_fake_;
+  float distance_order_;
+  float time_;
+  float time_balance_;
+  float time_fake_;
+  float time_order_;
+  float time_without_wait_;
+  float value_;
+  float lateness_;
+  float overload_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_localsolver_5fresult_2eproto;
 };
@@ -316,7 +649,7 @@ class Route PROTOBUF_FINAL :
                &_Route_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    1;
+    2;
 
   friend void swap(Route& a, Route& b) {
     a.Swap(&b);
@@ -388,6 +721,7 @@ class Route PROTOBUF_FINAL :
 
   enum : int {
     kActivitiesFieldNumber = 1,
+    kCostDetailsFieldNumber = 2,
   };
   // repeated .localsolver_result.Activity activities = 1;
   int activities_size() const;
@@ -407,6 +741,24 @@ class Route PROTOBUF_FINAL :
   const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::localsolver_result::Activity >&
       activities() const;
 
+  // .localsolver_result.CostDetails cost_details = 2;
+  bool has_cost_details() const;
+  private:
+  bool _internal_has_cost_details() const;
+  public:
+  void clear_cost_details();
+  const ::localsolver_result::CostDetails& cost_details() const;
+  ::localsolver_result::CostDetails* release_cost_details();
+  ::localsolver_result::CostDetails* mutable_cost_details();
+  void set_allocated_cost_details(::localsolver_result::CostDetails* cost_details);
+  private:
+  const ::localsolver_result::CostDetails& _internal_cost_details() const;
+  ::localsolver_result::CostDetails* _internal_mutable_cost_details();
+  public:
+  void unsafe_arena_set_allocated_cost_details(
+      ::localsolver_result::CostDetails* cost_details);
+  ::localsolver_result::CostDetails* unsafe_arena_release_cost_details();
+
   // @@protoc_insertion_point(class_scope:localsolver_result.Route)
  private:
   class _Internal;
@@ -415,6 +767,7 @@ class Route PROTOBUF_FINAL :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::localsolver_result::Activity > activities_;
+  ::localsolver_result::CostDetails* cost_details_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_localsolver_5fresult_2eproto;
 };
@@ -462,7 +815,7 @@ class Result PROTOBUF_FINAL :
                &_Result_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    2;
+    3;
 
   friend void swap(Result& a, Result& b) {
     a.Swap(&b);
@@ -556,13 +909,13 @@ class Result PROTOBUF_FINAL :
   const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::localsolver_result::Route >&
       routes() const;
 
-  // int64 cost = 1;
+  // float cost = 1;
   void clear_cost();
-  ::PROTOBUF_NAMESPACE_ID::int64 cost() const;
-  void set_cost(::PROTOBUF_NAMESPACE_ID::int64 value);
+  float cost() const;
+  void set_cost(float value);
   private:
-  ::PROTOBUF_NAMESPACE_ID::int64 _internal_cost() const;
-  void _internal_set_cost(::PROTOBUF_NAMESPACE_ID::int64 value);
+  float _internal_cost() const;
+  void _internal_set_cost(float value);
   public:
 
   // float duration = 2;
@@ -591,7 +944,7 @@ class Result PROTOBUF_FINAL :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::localsolver_result::Route > routes_;
-  ::PROTOBUF_NAMESPACE_ID::int64 cost_;
+  float cost_;
   float duration_;
   ::PROTOBUF_NAMESPACE_ID::int32 iterations_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
@@ -628,7 +981,7 @@ inline void Activity::set_index(::PROTOBUF_NAMESPACE_ID::int32 value) {
   // @@protoc_insertion_point(field_set:localsolver_result.Activity.index)
 }
 
-// repeated int32 quantities = 2;
+// repeated float quantities = 2;
 inline int Activity::_internal_quantities_size() const {
   return quantities_.size();
 }
@@ -638,38 +991,38 @@ inline int Activity::quantities_size() const {
 inline void Activity::clear_quantities() {
   quantities_.Clear();
 }
-inline ::PROTOBUF_NAMESPACE_ID::int32 Activity::_internal_quantities(int index) const {
+inline float Activity::_internal_quantities(int index) const {
   return quantities_.Get(index);
 }
-inline ::PROTOBUF_NAMESPACE_ID::int32 Activity::quantities(int index) const {
+inline float Activity::quantities(int index) const {
   // @@protoc_insertion_point(field_get:localsolver_result.Activity.quantities)
   return _internal_quantities(index);
 }
-inline void Activity::set_quantities(int index, ::PROTOBUF_NAMESPACE_ID::int32 value) {
+inline void Activity::set_quantities(int index, float value) {
   quantities_.Set(index, value);
   // @@protoc_insertion_point(field_set:localsolver_result.Activity.quantities)
 }
-inline void Activity::_internal_add_quantities(::PROTOBUF_NAMESPACE_ID::int32 value) {
+inline void Activity::_internal_add_quantities(float value) {
   quantities_.Add(value);
 }
-inline void Activity::add_quantities(::PROTOBUF_NAMESPACE_ID::int32 value) {
+inline void Activity::add_quantities(float value) {
   _internal_add_quantities(value);
   // @@protoc_insertion_point(field_add:localsolver_result.Activity.quantities)
 }
-inline const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::int32 >&
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedField< float >&
 Activity::_internal_quantities() const {
   return quantities_;
 }
-inline const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::int32 >&
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedField< float >&
 Activity::quantities() const {
   // @@protoc_insertion_point(field_list:localsolver_result.Activity.quantities)
   return _internal_quantities();
 }
-inline ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::int32 >*
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedField< float >*
 Activity::_internal_mutable_quantities() {
   return &quantities_;
 }
-inline ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::int32 >*
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedField< float >*
 Activity::mutable_quantities() {
   // @@protoc_insertion_point(field_mutable_list:localsolver_result.Activity.quantities)
   return _internal_mutable_quantities();
@@ -776,6 +1129,411 @@ inline void Activity::unsafe_arena_set_allocated_type(
   // @@protoc_insertion_point(field_unsafe_arena_set_allocated:localsolver_result.Activity.type)
 }
 
+// int32 alternative = 5;
+inline void Activity::clear_alternative() {
+  alternative_ = 0;
+}
+inline ::PROTOBUF_NAMESPACE_ID::int32 Activity::_internal_alternative() const {
+  return alternative_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::int32 Activity::alternative() const {
+  // @@protoc_insertion_point(field_get:localsolver_result.Activity.alternative)
+  return _internal_alternative();
+}
+inline void Activity::_internal_set_alternative(::PROTOBUF_NAMESPACE_ID::int32 value) {
+  
+  alternative_ = value;
+}
+inline void Activity::set_alternative(::PROTOBUF_NAMESPACE_ID::int32 value) {
+  _internal_set_alternative(value);
+  // @@protoc_insertion_point(field_set:localsolver_result.Activity.alternative)
+}
+
+// int32 current_distance = 6;
+inline void Activity::clear_current_distance() {
+  current_distance_ = 0;
+}
+inline ::PROTOBUF_NAMESPACE_ID::int32 Activity::_internal_current_distance() const {
+  return current_distance_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::int32 Activity::current_distance() const {
+  // @@protoc_insertion_point(field_get:localsolver_result.Activity.current_distance)
+  return _internal_current_distance();
+}
+inline void Activity::_internal_set_current_distance(::PROTOBUF_NAMESPACE_ID::int32 value) {
+  
+  current_distance_ = value;
+}
+inline void Activity::set_current_distance(::PROTOBUF_NAMESPACE_ID::int32 value) {
+  _internal_set_current_distance(value);
+  // @@protoc_insertion_point(field_set:localsolver_result.Activity.current_distance)
+}
+
+// string id = 7;
+inline void Activity::clear_id() {
+  id_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline const std::string& Activity::id() const {
+  // @@protoc_insertion_point(field_get:localsolver_result.Activity.id)
+  return _internal_id();
+}
+inline void Activity::set_id(const std::string& value) {
+  _internal_set_id(value);
+  // @@protoc_insertion_point(field_set:localsolver_result.Activity.id)
+}
+inline std::string* Activity::mutable_id() {
+  // @@protoc_insertion_point(field_mutable:localsolver_result.Activity.id)
+  return _internal_mutable_id();
+}
+inline const std::string& Activity::_internal_id() const {
+  return id_.Get();
+}
+inline void Activity::_internal_set_id(const std::string& value) {
+  
+  id_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value, GetArena());
+}
+inline void Activity::set_id(std::string&& value) {
+  
+  id_.Set(
+    &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::move(value), GetArena());
+  // @@protoc_insertion_point(field_set_rvalue:localsolver_result.Activity.id)
+}
+inline void Activity::set_id(const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  
+  id_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(value),
+              GetArena());
+  // @@protoc_insertion_point(field_set_char:localsolver_result.Activity.id)
+}
+inline void Activity::set_id(const char* value,
+    size_t size) {
+  
+  id_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(
+      reinterpret_cast<const char*>(value), size), GetArena());
+  // @@protoc_insertion_point(field_set_pointer:localsolver_result.Activity.id)
+}
+inline std::string* Activity::_internal_mutable_id() {
+  
+  return id_.Mutable(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline std::string* Activity::release_id() {
+  // @@protoc_insertion_point(field_release:localsolver_result.Activity.id)
+  return id_.Release(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline void Activity::set_allocated_id(std::string* id) {
+  if (id != nullptr) {
+    
+  } else {
+    
+  }
+  id_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), id,
+      GetArena());
+  // @@protoc_insertion_point(field_set_allocated:localsolver_result.Activity.id)
+}
+inline std::string* Activity::unsafe_arena_release_id() {
+  // @@protoc_insertion_point(field_unsafe_arena_release:localsolver_result.Activity.id)
+  GOOGLE_DCHECK(GetArena() != nullptr);
+  
+  return id_.UnsafeArenaRelease(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
+      GetArena());
+}
+inline void Activity::unsafe_arena_set_allocated_id(
+    std::string* id) {
+  GOOGLE_DCHECK(GetArena() != nullptr);
+  if (id != nullptr) {
+    
+  } else {
+    
+  }
+  id_.UnsafeArenaSetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
+      id, GetArena());
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:localsolver_result.Activity.id)
+}
+
+// int64 lateness = 8;
+inline void Activity::clear_lateness() {
+  lateness_ = PROTOBUF_LONGLONG(0);
+}
+inline ::PROTOBUF_NAMESPACE_ID::int64 Activity::_internal_lateness() const {
+  return lateness_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::int64 Activity::lateness() const {
+  // @@protoc_insertion_point(field_get:localsolver_result.Activity.lateness)
+  return _internal_lateness();
+}
+inline void Activity::_internal_set_lateness(::PROTOBUF_NAMESPACE_ID::int64 value) {
+  
+  lateness_ = value;
+}
+inline void Activity::set_lateness(::PROTOBUF_NAMESPACE_ID::int64 value) {
+  _internal_set_lateness(value);
+  // @@protoc_insertion_point(field_set:localsolver_result.Activity.lateness)
+}
+
+// -------------------------------------------------------------------
+
+// CostDetails
+
+// float fixed = 1;
+inline void CostDetails::clear_fixed() {
+  fixed_ = 0;
+}
+inline float CostDetails::_internal_fixed() const {
+  return fixed_;
+}
+inline float CostDetails::fixed() const {
+  // @@protoc_insertion_point(field_get:localsolver_result.CostDetails.fixed)
+  return _internal_fixed();
+}
+inline void CostDetails::_internal_set_fixed(float value) {
+  
+  fixed_ = value;
+}
+inline void CostDetails::set_fixed(float value) {
+  _internal_set_fixed(value);
+  // @@protoc_insertion_point(field_set:localsolver_result.CostDetails.fixed)
+}
+
+// float distance = 2;
+inline void CostDetails::clear_distance() {
+  distance_ = 0;
+}
+inline float CostDetails::_internal_distance() const {
+  return distance_;
+}
+inline float CostDetails::distance() const {
+  // @@protoc_insertion_point(field_get:localsolver_result.CostDetails.distance)
+  return _internal_distance();
+}
+inline void CostDetails::_internal_set_distance(float value) {
+  
+  distance_ = value;
+}
+inline void CostDetails::set_distance(float value) {
+  _internal_set_distance(value);
+  // @@protoc_insertion_point(field_set:localsolver_result.CostDetails.distance)
+}
+
+// float distance_balance = 3;
+inline void CostDetails::clear_distance_balance() {
+  distance_balance_ = 0;
+}
+inline float CostDetails::_internal_distance_balance() const {
+  return distance_balance_;
+}
+inline float CostDetails::distance_balance() const {
+  // @@protoc_insertion_point(field_get:localsolver_result.CostDetails.distance_balance)
+  return _internal_distance_balance();
+}
+inline void CostDetails::_internal_set_distance_balance(float value) {
+  
+  distance_balance_ = value;
+}
+inline void CostDetails::set_distance_balance(float value) {
+  _internal_set_distance_balance(value);
+  // @@protoc_insertion_point(field_set:localsolver_result.CostDetails.distance_balance)
+}
+
+// float distance_fake = 4;
+inline void CostDetails::clear_distance_fake() {
+  distance_fake_ = 0;
+}
+inline float CostDetails::_internal_distance_fake() const {
+  return distance_fake_;
+}
+inline float CostDetails::distance_fake() const {
+  // @@protoc_insertion_point(field_get:localsolver_result.CostDetails.distance_fake)
+  return _internal_distance_fake();
+}
+inline void CostDetails::_internal_set_distance_fake(float value) {
+  
+  distance_fake_ = value;
+}
+inline void CostDetails::set_distance_fake(float value) {
+  _internal_set_distance_fake(value);
+  // @@protoc_insertion_point(field_set:localsolver_result.CostDetails.distance_fake)
+}
+
+// float distance_order = 5;
+inline void CostDetails::clear_distance_order() {
+  distance_order_ = 0;
+}
+inline float CostDetails::_internal_distance_order() const {
+  return distance_order_;
+}
+inline float CostDetails::distance_order() const {
+  // @@protoc_insertion_point(field_get:localsolver_result.CostDetails.distance_order)
+  return _internal_distance_order();
+}
+inline void CostDetails::_internal_set_distance_order(float value) {
+  
+  distance_order_ = value;
+}
+inline void CostDetails::set_distance_order(float value) {
+  _internal_set_distance_order(value);
+  // @@protoc_insertion_point(field_set:localsolver_result.CostDetails.distance_order)
+}
+
+// float time = 6;
+inline void CostDetails::clear_time() {
+  time_ = 0;
+}
+inline float CostDetails::_internal_time() const {
+  return time_;
+}
+inline float CostDetails::time() const {
+  // @@protoc_insertion_point(field_get:localsolver_result.CostDetails.time)
+  return _internal_time();
+}
+inline void CostDetails::_internal_set_time(float value) {
+  
+  time_ = value;
+}
+inline void CostDetails::set_time(float value) {
+  _internal_set_time(value);
+  // @@protoc_insertion_point(field_set:localsolver_result.CostDetails.time)
+}
+
+// float time_balance = 7;
+inline void CostDetails::clear_time_balance() {
+  time_balance_ = 0;
+}
+inline float CostDetails::_internal_time_balance() const {
+  return time_balance_;
+}
+inline float CostDetails::time_balance() const {
+  // @@protoc_insertion_point(field_get:localsolver_result.CostDetails.time_balance)
+  return _internal_time_balance();
+}
+inline void CostDetails::_internal_set_time_balance(float value) {
+  
+  time_balance_ = value;
+}
+inline void CostDetails::set_time_balance(float value) {
+  _internal_set_time_balance(value);
+  // @@protoc_insertion_point(field_set:localsolver_result.CostDetails.time_balance)
+}
+
+// float time_fake = 8;
+inline void CostDetails::clear_time_fake() {
+  time_fake_ = 0;
+}
+inline float CostDetails::_internal_time_fake() const {
+  return time_fake_;
+}
+inline float CostDetails::time_fake() const {
+  // @@protoc_insertion_point(field_get:localsolver_result.CostDetails.time_fake)
+  return _internal_time_fake();
+}
+inline void CostDetails::_internal_set_time_fake(float value) {
+  
+  time_fake_ = value;
+}
+inline void CostDetails::set_time_fake(float value) {
+  _internal_set_time_fake(value);
+  // @@protoc_insertion_point(field_set:localsolver_result.CostDetails.time_fake)
+}
+
+// float time_order = 9;
+inline void CostDetails::clear_time_order() {
+  time_order_ = 0;
+}
+inline float CostDetails::_internal_time_order() const {
+  return time_order_;
+}
+inline float CostDetails::time_order() const {
+  // @@protoc_insertion_point(field_get:localsolver_result.CostDetails.time_order)
+  return _internal_time_order();
+}
+inline void CostDetails::_internal_set_time_order(float value) {
+  
+  time_order_ = value;
+}
+inline void CostDetails::set_time_order(float value) {
+  _internal_set_time_order(value);
+  // @@protoc_insertion_point(field_set:localsolver_result.CostDetails.time_order)
+}
+
+// float time_without_wait = 10;
+inline void CostDetails::clear_time_without_wait() {
+  time_without_wait_ = 0;
+}
+inline float CostDetails::_internal_time_without_wait() const {
+  return time_without_wait_;
+}
+inline float CostDetails::time_without_wait() const {
+  // @@protoc_insertion_point(field_get:localsolver_result.CostDetails.time_without_wait)
+  return _internal_time_without_wait();
+}
+inline void CostDetails::_internal_set_time_without_wait(float value) {
+  
+  time_without_wait_ = value;
+}
+inline void CostDetails::set_time_without_wait(float value) {
+  _internal_set_time_without_wait(value);
+  // @@protoc_insertion_point(field_set:localsolver_result.CostDetails.time_without_wait)
+}
+
+// float value = 11;
+inline void CostDetails::clear_value() {
+  value_ = 0;
+}
+inline float CostDetails::_internal_value() const {
+  return value_;
+}
+inline float CostDetails::value() const {
+  // @@protoc_insertion_point(field_get:localsolver_result.CostDetails.value)
+  return _internal_value();
+}
+inline void CostDetails::_internal_set_value(float value) {
+  
+  value_ = value;
+}
+inline void CostDetails::set_value(float value) {
+  _internal_set_value(value);
+  // @@protoc_insertion_point(field_set:localsolver_result.CostDetails.value)
+}
+
+// float lateness = 12;
+inline void CostDetails::clear_lateness() {
+  lateness_ = 0;
+}
+inline float CostDetails::_internal_lateness() const {
+  return lateness_;
+}
+inline float CostDetails::lateness() const {
+  // @@protoc_insertion_point(field_get:localsolver_result.CostDetails.lateness)
+  return _internal_lateness();
+}
+inline void CostDetails::_internal_set_lateness(float value) {
+  
+  lateness_ = value;
+}
+inline void CostDetails::set_lateness(float value) {
+  _internal_set_lateness(value);
+  // @@protoc_insertion_point(field_set:localsolver_result.CostDetails.lateness)
+}
+
+// float overload = 13;
+inline void CostDetails::clear_overload() {
+  overload_ = 0;
+}
+inline float CostDetails::_internal_overload() const {
+  return overload_;
+}
+inline float CostDetails::overload() const {
+  // @@protoc_insertion_point(field_get:localsolver_result.CostDetails.overload)
+  return _internal_overload();
+}
+inline void CostDetails::_internal_set_overload(float value) {
+  
+  overload_ = value;
+}
+inline void CostDetails::set_overload(float value) {
+  _internal_set_overload(value);
+  // @@protoc_insertion_point(field_set:localsolver_result.CostDetails.overload)
+}
+
 // -------------------------------------------------------------------
 
 // Route
@@ -819,26 +1577,107 @@ Route::activities() const {
   return activities_;
 }
 
+// .localsolver_result.CostDetails cost_details = 2;
+inline bool Route::_internal_has_cost_details() const {
+  return this != internal_default_instance() && cost_details_ != nullptr;
+}
+inline bool Route::has_cost_details() const {
+  return _internal_has_cost_details();
+}
+inline void Route::clear_cost_details() {
+  if (GetArena() == nullptr && cost_details_ != nullptr) {
+    delete cost_details_;
+  }
+  cost_details_ = nullptr;
+}
+inline const ::localsolver_result::CostDetails& Route::_internal_cost_details() const {
+  const ::localsolver_result::CostDetails* p = cost_details_;
+  return p != nullptr ? *p : *reinterpret_cast<const ::localsolver_result::CostDetails*>(
+      &::localsolver_result::_CostDetails_default_instance_);
+}
+inline const ::localsolver_result::CostDetails& Route::cost_details() const {
+  // @@protoc_insertion_point(field_get:localsolver_result.Route.cost_details)
+  return _internal_cost_details();
+}
+inline void Route::unsafe_arena_set_allocated_cost_details(
+    ::localsolver_result::CostDetails* cost_details) {
+  if (GetArena() == nullptr) {
+    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(cost_details_);
+  }
+  cost_details_ = cost_details;
+  if (cost_details) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:localsolver_result.Route.cost_details)
+}
+inline ::localsolver_result::CostDetails* Route::release_cost_details() {
+  auto temp = unsafe_arena_release_cost_details();
+  if (GetArena() != nullptr) {
+    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  }
+  return temp;
+}
+inline ::localsolver_result::CostDetails* Route::unsafe_arena_release_cost_details() {
+  // @@protoc_insertion_point(field_release:localsolver_result.Route.cost_details)
+  
+  ::localsolver_result::CostDetails* temp = cost_details_;
+  cost_details_ = nullptr;
+  return temp;
+}
+inline ::localsolver_result::CostDetails* Route::_internal_mutable_cost_details() {
+  
+  if (cost_details_ == nullptr) {
+    auto* p = CreateMaybeMessage<::localsolver_result::CostDetails>(GetArena());
+    cost_details_ = p;
+  }
+  return cost_details_;
+}
+inline ::localsolver_result::CostDetails* Route::mutable_cost_details() {
+  // @@protoc_insertion_point(field_mutable:localsolver_result.Route.cost_details)
+  return _internal_mutable_cost_details();
+}
+inline void Route::set_allocated_cost_details(::localsolver_result::CostDetails* cost_details) {
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArena();
+  if (message_arena == nullptr) {
+    delete cost_details_;
+  }
+  if (cost_details) {
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+      ::PROTOBUF_NAMESPACE_ID::Arena::GetArena(cost_details);
+    if (message_arena != submessage_arena) {
+      cost_details = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
+          message_arena, cost_details, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  cost_details_ = cost_details;
+  // @@protoc_insertion_point(field_set_allocated:localsolver_result.Route.cost_details)
+}
+
 // -------------------------------------------------------------------
 
 // Result
 
-// int64 cost = 1;
+// float cost = 1;
 inline void Result::clear_cost() {
-  cost_ = PROTOBUF_LONGLONG(0);
+  cost_ = 0;
 }
-inline ::PROTOBUF_NAMESPACE_ID::int64 Result::_internal_cost() const {
+inline float Result::_internal_cost() const {
   return cost_;
 }
-inline ::PROTOBUF_NAMESPACE_ID::int64 Result::cost() const {
+inline float Result::cost() const {
   // @@protoc_insertion_point(field_get:localsolver_result.Result.cost)
   return _internal_cost();
 }
-inline void Result::_internal_set_cost(::PROTOBUF_NAMESPACE_ID::int64 value) {
+inline void Result::_internal_set_cost(float value) {
   
   cost_ = value;
 }
-inline void Result::set_cost(::PROTOBUF_NAMESPACE_ID::int64 value) {
+inline void Result::set_cost(float value) {
   _internal_set_cost(value);
   // @@protoc_insertion_point(field_set:localsolver_result.Result.cost)
 }
@@ -925,6 +1764,8 @@ Result::routes() const {
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------
