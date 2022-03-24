@@ -1,0 +1,80 @@
+[
+    {
+        "arguments": [
+            "g++",
+            "-c",
+            "-std=c++17",
+            "-isystem",
+            "../or-tools/include",
+            "-isystem",
+            "/opt/localsolver_10_5/include",
+            "-O3",
+            "-DNDEBUG",
+            "-Wall",
+            "-Wextra",
+            "-Wshadow",
+            "-Wmissing-include-dirs",
+            "-Wswitch-enum",
+            "-Wfloat-equal",
+            "-Wundef",
+            "-Wno-array-bounds",
+            "-o",
+            "localsolver_result.pb.o",
+            "localsolver_result.pb.cc"
+        ],
+        "directory": "/home/pierre/dev/optimizer-localsolver",
+        "file": "localsolver_result.pb.cc"
+    },
+    {
+        "arguments": [
+            "g++",
+            "-c",
+            "-std=c++17",
+            "-isystem",
+            "../or-tools/include",
+            "-isystem",
+            "/opt/localsolver_10_5/include",
+            "-O3",
+            "-DNDEBUG",
+            "-Wall",
+            "-Wextra",
+            "-Wshadow",
+            "-Wmissing-include-dirs",
+            "-Wswitch-enum",
+            "-Wfloat-equal",
+            "-Wundef",
+            "-Wno-array-bounds",
+            "-o",
+            "tsp_localsolver.o",
+            "tsp_localsolver.cc"
+        ],
+        "directory": "/home/pierre/dev/optimizer-localsolver",
+        "file": "tsp_localsolver.cc"
+    },
+    {
+        "arguments": [
+            "g++",
+            "-c",
+            "-std=c++17",
+            "-isystem",
+            "../or-tools/include",
+            "-isystem",
+            "/opt/localsolver_10_5/include",
+            "-O3",
+            "-DNDEBUG",
+            "-Wall",
+            "-Wextra",
+            "-Wshadow",
+            "-Wmissing-include-dirs",
+            "-Wswitch-enum",
+            "-Wfloat-equal",
+            "-Wundef",
+            "-Wno-array-bounds",
+            "-o",
+            "localsolver_vrp.pb.o",
+            "localsolver_vrp.pb.cc"
+        ],
+        "directory": "/home/pierre/dev/optimizer-localsolver",
+        "file": "localsolver_vrp.pb.cc"
+    }
+]

@@ -9,14 +9,19 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/tsp_localsolver",
-            "args": [ 
-                        "-instance_file", "${workspaceFolder}/instance_licent_localsolver",
-                        "-solution_file", "/tmp/optimize-localsolver-output20180712-13097-xp90cp"
-                    ],
+            "args": [
+                "-instance_file",
+                "${workspaceFolder}/instance_licent_localsolver",
+                "-solution_file",
+                "/tmp/optimize-localsolver-output20180712-13097-xp90cp"
+            ],
             "cwd": "${workspaceFolder}",
             "environment": [
-               {"name":"LSAN_OPTIONS", "value":"verbosity=1:log_threads=1"}
-            //    {"name":"LD_LIBRARY_PATH", "value":"../optimizer-localsolver/dependencies/install/lib/:../localsolver_8_0/include/"}
+                {
+                    "name": "LSAN_OPTIONS",
+                    "value": "verbosity=1:log_threads=1"
+                }
+                //    {"name":"LD_LIBRARY_PATH", "value":"../optimizer-localsolver/dependencies/install/lib/:../localsolver_8_0/include/"}
             ],
             "externalConsole": false,
             "MIMode": "gdb",

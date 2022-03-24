@@ -1,0 +1,9 @@
+BasedOnStyle: LLVM
+
+Language: Cpp
+
+BreakConstructorInitializers: BeforeComma
+ColumnLimit: 90
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+KeepEmptyLinesAtTheStartOfBlocks: false
+PointerAlignment: Left

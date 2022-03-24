@@ -57,5 +57,11 @@
         "*.inc": "cpp"
     },
     "C_Cpp.errorSquiggles": "Disabled",
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
+    "cSpell.words": [
+        "ortools",
+        "pyplot",
+        "vect",
+        "ylabel"
+    ]
 }
