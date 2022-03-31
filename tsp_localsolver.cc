@@ -18,6 +18,8 @@
 #include "localsolver.h"
 #include "ortools/base/commandlineflags.h"
 
+#define CUSTOM_MAX_INT (int64) std::pow(2, 30)
+
 DEFINE_string(solution_file, "", "solution file name ");
 DEFINE_string(instance_file, "", "instance file name or data");
 
@@ -72,6 +74,24 @@ public:
   vector<map<int, LSExpression>> timesFromWarehouses;
   vector<map<int, LSExpression>> timesToWarehouses;
 
+  LSExpression twStartsArray;
+  LSExpression twEndsArray;
+  LSExpression twAbsoluteEndsArray;
+
+  LSExpression nextStart(const LSExpression& service, const LSExpression& time) {
+    LSExpression timeSelector = model.createLambdaFunction([&](LSExpression k) {
+      return model.iif(model.at(twAbsoluteEndsArray, service, k) >= time,
+                       model.at(twStartsArray, service, k),
+                       model.at(twAbsoluteEndsArray, service,
+                                twAbsoluteEndsArray[service].getNbOperands()));
+    });
+
+    LSExpression earliestAvailableTime = model.min(
+        model.range(0, twAbsoluteEndsArray[service].getNbOperands()), timeSelector);
+
+    return model.max(time, earliestAvailableTime);
+  }
+
   void MatrixBuilder(vector<LSExpression>& Matrices, const RepeatedField<float>& matrix) {
     LSExpression Matrix(model.array());
     int matrix_size = sqrt(matrix.size());
@@ -112,7 +132,10 @@ public:
       , model(localsolver.getModel())
       , timeMatrices(0, model.array())
       , serviceQuantitiesMatrix(model.array())
-      , vehicleCapacitiesMatrix(model.array()) {
+      , vehicleCapacitiesMatrix(model.array())
+      , twStartsArray(model.array())
+      , twEndsArray(model.array())
+      , twAbsoluteEndsArray(model.array()) {
     for (const auto& matrix : problem.matrices()) {
       MatrixBuilder(timeMatrices, matrix.time());
       cout << timeMatrices.rbegin()->toString() << endl;
@@ -168,8 +191,6 @@ public:
       cout << vehicle.id() << " " << vehicleEndMap[vehicle.end_index()].toString()
            << endl;
 
-      // To[0][vehicle.start_index()] = model.array();
-
       int matrix_size =
           max(sqrt(problem.matrices(vehicle.matrix_index()).time_size()),
               sqrt(problem.matrices(vehicle.matrix_index()).distance_size()));
@@ -201,7 +222,6 @@ public:
     vector<int> serviceTimeVec;
     vector<vector<float>> serviceQuantitiesVec;
     vector<float> serviceExclusionCostVec;
-    vector<pair<int, int>> serviceBeginningTW;
 
     int s = 0;
     for (const auto& service : problem.services()) {
@@ -218,17 +238,25 @@ public:
       } else {
         serviceExclusionCostVec.push_back(100);
       }
-
-      if (service.time_windows_size() > 1) {
-        pair<int, int> TW;
-        TW.first = service.time_windows(0).start();
-        TW.second = service.time_windows(1).start();
-        serviceBeginningTW.push_back(TW);
+      vector<int> serviceTWStarts;
+      vector<int> serviceTWEnds;
+      vector<int> serviceTWAbsoluteEnds;
+      for (const auto& tw : service.time_windows()) {
+        serviceTWStarts.push_back(tw.start());
+        serviceTWEnds.push_back(tw.end());
+        serviceTWAbsoluteEnds.push_back(tw.end() + tw.maximum_lateness());
       }
-
+      serviceTWAbsoluteEnds.back();
+      twStartsArray.addOperand(
+          model.array(serviceTWStarts.begin(), serviceTWStarts.end()));
+      twStartsArray.setName("TW starts :");
+      twEndsArray.addOperand(model.array(serviceTWEnds.begin(), serviceTWEnds.end()));
+      twAbsoluteEndsArray.addOperand(
+          model.array(serviceTWAbsoluteEnds.begin(), serviceTWAbsoluteEnds.end()));
       ids_map_[(string)service.id()] = s;
       s++;
     }
+
     serviceTime = model.array(serviceTimeVec.begin(), serviceTimeVec.end());
     serviceExclusionCost =
         model.array(serviceExclusionCostVec.begin(), serviceExclusionCostVec.end());
@@ -258,6 +286,8 @@ public:
 
     vector<LSExpression> routeDuration(problem.vehicles_size());
     vector<LSExpression> endTime(problem.vehicles_size());
+    vector<LSExpression> beginTime(problem.vehicles_size());
+    vector<LSExpression> serviceStartsInTW(problem.vehicles_size());
 
     // all services must be satisfied by the vehicles
     LSExpression partition =
@@ -284,8 +314,11 @@ public:
       routeDuration[k] =
           model.sum(model.range(1, c), durationSelector) +
           model.iif(c > 0,
-                    timesFromWarehouses[vehicle.matrix_index()][vehicle.start_index()]
-                                       [sequence[0]] +
+                    ((vehicle.has_time_window())
+                         ? static_cast<lsint>(vehicle.time_window().start())
+                         : 0) +
+                        timesFromWarehouses[vehicle.matrix_index()][vehicle.start_index()]
+                                           [sequence[0]] +
                         timesToWarehouses[vehicle.matrix_index()][vehicle.end_index()]
                                          [sequence[c - 1]] +
                         serviceTime[sequence[c - 1]],
@@ -295,10 +328,57 @@ public:
            vehicle.time_window().end() - vehicle.time_window().start() >
                vehicle.duration())) {
         LSExpression duration_constraint =
-            routeDuration[k] <= static_cast<lsint>(vehicle.duration());
+            (routeDuration[k] - static_cast<lsint>(vehicle.time_window().start())) <=
+            static_cast<lsint>(vehicle.duration());
         duration_constraint.setName("duration_constraint_" + to_string(k));
         model.constraint(duration_constraint);
       }
+
+      if (vehicle.has_time_window() && vehicle.time_window().end() < CUSTOM_MAX_INT) {
+        model.constraint(routeDuration[k] <=
+                         static_cast<lsint>(vehicle.time_window().end() +
+                                            vehicle.time_window().maximum_lateness()));
+      }
+
+      // End of each visit
+      LSExpression beginSelector =
+          model.createLambdaFunction([&](LSExpression i, LSExpression prev) {
+            return model.min(
+                model.at(twAbsoluteEndsArray, sequence[i],
+                         twAbsoluteEndsArray[sequence[i]].getNbOperands() - 1),
+                model.max(
+                    model.at(twStartsArray, sequence[i], 0),
+                    model.iif(i == 0,
+                              ((vehicle.has_time_window())
+                                   ? static_cast<lsint>(vehicle.time_window().start())
+                                   : 0) +
+                                  timesFromWarehouses[vehicle.matrix_index()]
+                                                     [vehicle.start_index()][sequence[0]],
+                              prev + serviceTime[sequence[i - 1]] +
+                                  model.at(timeMatrices[vehicle.matrix_index()],
+                                           sequence[i - 1], sequence[i]))));
+          });
+
+      beginTime[k] = model.array(model.range(0, c), beginSelector);
+
+      LSExpression serviceTWVerifs = model.createLambdaFunction([&](LSExpression i) {
+        LSExpression serviceTWVerif = model.or_(true);
+        for (int tw_index = 0;
+             tw_index < twAbsoluteEndsArray[sequence[i]].getNbOperands(); ++tw_index) {
+          serviceTWVerif = serviceTWVerif ||
+                           (model.at(beginTime[k], sequence[i]) >=
+                                model.at(twStartsArray, sequence[i], tw_index) &&
+                            model.at(beginTime[k], sequence[i]) <=
+                                model.at(twAbsoluteEndsArray, sequence[i], tw_index));
+        }
+
+        return serviceTWVerif;
+      });
+      model.constraint(model.and_(model.range(0, c), serviceTWVerifs));
+
+      // model.constraint(model.or_(model.range(0,
+      // problem.services(0).time_windows_size()),
+      //                            servicesTWVerifSelector));
 
       //   // vector<LSExpression> routeQuantitiesVec;
       //   LSExpression routeQuantities(model.array());
@@ -371,6 +451,7 @@ public:
 
     model.close();
 
+    cout << model.toString() << endl;
     localsolver.getParam().setTimeLimit(5);
 
     // With ls a LocalSolver object
@@ -378,13 +459,14 @@ public:
     cout << iis.toString() << endl;
 
     localsolver.solve();
+
+    cout << endl;
     cout << "total duration = " << totalDuration.getValue() << endl;
     cout << "vehicle capacities matrix"
          << vehicleCapacitiesMatrix.getArrayValue().toString() << endl;
 
     cout << "service Quantities Matrix "
          << serviceQuantitiesMatrix.getArrayValue().toString() << endl;
-
     if (vehiclesUsed[problem.vehicles_size()].getValue() == 0) {
       cout << "No unassigned service" << endl;
     } else {
@@ -451,3 +533,23 @@ int main(int argc, char** argv) {
 
   return 0;
 }
+// // Gives the right timewindow to compare to the actual time
+// LSExpression compare = model.createFunction([&](LSExpression i, LSExpression prev) {
+//   return model.iif(
+//       i == 0,
+//       model.iif(model.at(earliestArray2, sequence[i]) == -2,
+//                 model.at(earliestArray1, sequence[i]),
+//                 model.iif(distanceWarehousesArray[sequence[0]] + StartDepot[k] >
+//                               model.at(latestArray1, sequence[i]) -
+//                                   model.at(serviceArray, sequence[i]),
+//                           model.at(earliestArray2, sequence[i]),
+//                           model.at(earliestArray1, sequence[i]))),
+//       model.iif(model.at(earliestArray2, sequence[i]) == -2,
+//                 model.at(earliestArray1, sequence[i]),
+//                 model.iif(prev + model.at(distanceArray, sequence[i - 1], sequence[i])
+//                 >
+//                               model.at(latestArray1, sequence[i]) -
+//                                   model.at(serviceArray, sequence[i]),
+//                           model.at(earliestArray2, sequence[i]),
+//                           model.at(earliestArray1, sequence[i]))));
+// });
