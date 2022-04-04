@@ -80,10 +80,10 @@ public:
   LSExpression nbTwsArray;
 
   LSExpression nextStart(const LSExpression& service, const LSExpression& time) {
-    LSExpression timeSelector = model.createLambdaFunction([&](LSExpression k) {
-      return model.iif(model.at(twAbsoluteEndsArray, service, k) >= time,
-                       model.at(twStartsArray, service, k),
-                       model.at(twAbsoluteEndsArray, service, nbTwsArray[service]));
+    LSExpression timeSelector = model.createLambdaFunction([&](LSExpression tw_index) {
+      return model.iif(model.at(twAbsoluteEndsArray, service, tw_index) >= time,
+                       model.at(twStartsArray, service, tw_index),
+                       model.at(twAbsoluteEndsArray, service, nbTwsArray[service] - 1));
     });
 
     LSExpression earliestAvailableTime =
@@ -243,11 +243,17 @@ public:
       vector<int> serviceTWStarts;
       vector<int> serviceTWEnds;
       vector<int> serviceTWAbsoluteEnds;
+
       for (const auto& tw : service.time_windows()) {
         serviceTWStarts.push_back(tw.start());
         serviceTWEnds.push_back(tw.end());
-        serviceTWAbsoluteEnds.push_back(tw.end() + tw.maximum_lateness());
+        if (service.late_multiplier() > 0) {
+          serviceTWAbsoluteEnds.push_back(tw.end() + tw.maximum_lateness());
+        } else {
+          serviceTWAbsoluteEnds.push_back(tw.end());
+        }
       }
+
       serviceTWAbsoluteEnds.back();
       twStartsArray.addOperand(
           model.array(serviceTWStarts.begin(), serviceTWStarts.end()));
@@ -294,6 +300,7 @@ public:
     vector<LSExpression> beginTime(problem.vehicles_size());
     vector<LSExpression> serviceStartsInTW(problem.vehicles_size());
     vector<LSExpression> lateness(problem.vehicles_size());
+    vector<LSExpression> absoluteLateness(problem.vehicles_size());
 
     // all services must be satisfied by the vehicles
     LSExpression partition =
@@ -333,8 +340,6 @@ public:
                                                [vehicle.end_index()][sequence[c - 1]],
           0);
 
-      model.constraint(routeDuration[k] <=
-                       static_cast<lsint>(vehicle.time_window().end()));
       if (vehicle.duration() > 0 &&
           (!vehicle.has_time_window() ||
            vehicle.time_window().end() - vehicle.time_window().start() >
@@ -347,17 +352,22 @@ public:
       }
 
       if (vehicle.has_time_window() && vehicle.time_window().end() < CUSTOM_MAX_INT) {
-        model.constraint(routeDuration[k] <=
-                         static_cast<lsint>(vehicle.time_window().end() +
-                                            vehicle.time_window().maximum_lateness()));
+        if (vehicle.cost_late_multiplier() > 0) {
+          model.constraint(routeDuration[k] <=
+                           static_cast<lsint>(vehicle.time_window().end() +
+                                              vehicle.time_window().maximum_lateness()));
+        } else {
+          model.constraint(routeDuration[k] <=
+                           static_cast<lsint>(vehicle.time_window().end()));
+        }
       }
+      LSExpression excessLatenessSelector =
+          model.createLambdaFunction([&](LSExpression i) {
+            return model.max(
+                0, endTime[k][i] - (model.at(twAbsoluteEndsArray, i, nbTwsArray[i] - 1)));
+          });
+      absoluteLateness[k] = model.sum(model.range(0, c), excessLatenessSelector);
 
-      // model.constraint(model.or_(model.range(0,
-      // problem.services(0).time_windows_size()),
-      //                            servicesTWVerifSelector));
-
-      //   // vector<LSExpression> routeQuantitiesVec;
-      //   LSExpression routeQuantities(model.array());
       for (int unit_i = 0; unit_i < vehicle.capacities_size(); unit_i++) {
         LSExpression quantityCumulator = model.createLambdaFunction([&](LSExpression i) {
           return model.at(serviceQuantitiesMatrix, sequence[i], unit_i);
@@ -402,6 +412,10 @@ public:
       k++;
     }
 
+    LSExpression totalAbsoluteLateness =
+        model.sum(absoluteLateness.begin(), absoluteLateness.end());
+    model.constraint(totalAbsoluteLateness == 0);
+
     LSExpression unassignedServices = serviceSequences[problem.vehicles_size()];
     LSExpression c = model.count(unassignedServices);
     vehiclesUsed[problem.vehicles_size()] = c > 0;
@@ -428,7 +442,7 @@ public:
     model.close();
 
     cout << model.toString() << endl;
-    localsolver.getParam().setTimeLimit(5);
+    localsolver.getParam().setTimeLimit(FLAGS_time_limit_in_ms / 1000);
 
     // With ls a LocalSolver object
     auto iis = localsolver.computeInconsistency();
@@ -446,6 +460,13 @@ public:
                   .getArrayValue()
                   .toString()
            << endl;
+      cout << "timeToWarehouses of : " << vehicle.id() << " "
+           << timesToWarehouses[vehicle.matrix_index()][vehicle.end_index()]
+                  .getArrayValue()
+                  .toString()
+           << endl;
+      cout << "maximum duration of " << vehicle.id() << " : " << vehicle.duration()
+           << endl;
     }
 
     cout << "number of time windows " << nbTwsArray.getArrayValue().toString() << endl;
@@ -455,8 +476,8 @@ public:
 
     cout << " Time Window Ends Array :  " << twEndsArray.getArrayValue().toString()
          << endl;
-    cout << " Absolute End Array :  " << twAbsoluteEndsArray.getArrayValue().toString()
-         << endl;
+    cout << " Time Window Absolute End Array :  "
+         << twAbsoluteEndsArray.getArrayValue().toString() << endl;
 
     cout << endl;
     cout << "total duration = " << totalDuration.getValue() << endl;
@@ -497,6 +518,7 @@ public:
         cout << IndexId(servicesCollection[i]) << " ";
       }
       cout << endl;
+      cout << " total Absolute Latenness " << totalAbsoluteLateness.getValue() << endl;
       //   cout << "assigned service(s) to " << problem.vehicles(v).id()
       //        << " " + serviceSequences[v].getCollectionValue().toString() << endl;
     }
