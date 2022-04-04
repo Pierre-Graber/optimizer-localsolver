@@ -300,7 +300,7 @@ public:
     vector<LSExpression> beginTime(problem.vehicles_size());
     vector<LSExpression> serviceStartsInTW(problem.vehicles_size());
     vector<LSExpression> lateness(problem.vehicles_size());
-    vector<LSExpression> absoluteLateness(problem.vehicles_size());
+    vector<LSExpression> excessLateness(problem.vehicles_size());
 
     // all services must be satisfied by the vehicles
     LSExpression partition =
@@ -368,7 +368,7 @@ public:
       //                  (model.at(twAbsoluteEndsArray, i, nbTwsArray[sequence[i]] -
       //                  1)));
       //     });
-      // absoluteLateness[k] = model.sum(model.range(0, c), excessLatenessSelector);
+      // excessLateness[k] = model.sum(model.range(0, c), excessLatenessSelector);
 
       for (int unit_i = 0; unit_i < vehicle.capacities_size(); unit_i++) {
         LSExpression quantityCumulator = model.createLambdaFunction([&](LSExpression i) {
@@ -414,9 +414,9 @@ public:
       k++;
     }
 
-    // LSExpression totalAbsoluteLateness =
-    //     model.sum(absoluteLateness.begin(), absoluteLateness.end());
-    // model.constraint(totalAbsoluteLateness == 0);
+    // LSExpression totalExcessLateness =
+    //     model.sum(excessLateness.begin(), excessLateness.end());
+    // model.constraint(totalExcessLateness == 0);
 
     LSExpression unassignedServices = serviceSequences[problem.vehicles_size()];
     LSExpression c = model.count(unassignedServices);
@@ -439,7 +439,7 @@ public:
 
     // model.minimize(nbVehiclesUsed);
 
-    // model.minimize(totalAbsoluteLateness);
+    // model.minimize(totalExcessLateness);
     model.minimize(totalExclusionCost);
     model.minimize(totalDuration);
 
@@ -522,7 +522,7 @@ public:
         cout << IndexId(servicesCollection[i]) << " ";
       }
       cout << endl;
-      // cout << " total Absolute Latenness " << totalAbsoluteLateness.getValue() << endl;
+      // cout << " total Absolute Latenness " << totalExcessLateness.getValue() << endl;
       //   cout << "assigned service(s) to " << problem.vehicles(v).id()
       //        << " " + serviceSequences[v].getCollectionValue().toString() << endl;
     }
