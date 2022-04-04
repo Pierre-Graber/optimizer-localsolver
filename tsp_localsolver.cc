@@ -361,12 +361,14 @@ public:
                            static_cast<lsint>(vehicle.time_window().end()));
         }
       }
-      LSExpression excessLatenessSelector =
-          model.createLambdaFunction([&](LSExpression i) {
-            return model.max(
-                0, endTime[k][i] - (model.at(twAbsoluteEndsArray, i, nbTwsArray[i] - 1)));
-          });
-      absoluteLateness[k] = model.sum(model.range(0, c), excessLatenessSelector);
+      // LSExpression excessLatenessSelector =
+      //     model.createLambdaFunction([&](LSExpression i) {
+      //       return model.max(
+      //           0, endTime[k][i] - serviceTime[sequence[i]] -
+      //                  (model.at(twAbsoluteEndsArray, i, nbTwsArray[sequence[i]] -
+      //                  1)));
+      //     });
+      // absoluteLateness[k] = model.sum(model.range(0, c), excessLatenessSelector);
 
       for (int unit_i = 0; unit_i < vehicle.capacities_size(); unit_i++) {
         LSExpression quantityCumulator = model.createLambdaFunction([&](LSExpression i) {
@@ -412,9 +414,9 @@ public:
       k++;
     }
 
-    LSExpression totalAbsoluteLateness =
-        model.sum(absoluteLateness.begin(), absoluteLateness.end());
-    model.constraint(totalAbsoluteLateness == 0);
+    // LSExpression totalAbsoluteLateness =
+    //     model.sum(absoluteLateness.begin(), absoluteLateness.end());
+    // model.constraint(totalAbsoluteLateness == 0);
 
     LSExpression unassignedServices = serviceSequences[problem.vehicles_size()];
     LSExpression c = model.count(unassignedServices);
@@ -436,6 +438,8 @@ public:
     totalDuration.setName("totalDuration");
 
     // model.minimize(nbVehiclesUsed);
+
+    // model.minimize(totalAbsoluteLateness);
     model.minimize(totalExclusionCost);
     model.minimize(totalDuration);
 
@@ -518,7 +522,7 @@ public:
         cout << IndexId(servicesCollection[i]) << " ";
       }
       cout << endl;
-      cout << " total Absolute Latenness " << totalAbsoluteLateness.getValue() << endl;
+      // cout << " total Absolute Latenness " << totalAbsoluteLateness.getValue() << endl;
       //   cout << "assigned service(s) to " << problem.vehicles(v).id()
       //        << " " + serviceSequences[v].getCollectionValue().toString() << endl;
     }
@@ -564,23 +568,3 @@ int main(int argc, char** argv) {
 
   return 0;
 }
-// // Gives the right timewindow to compare to the actual time
-// LSExpression compare = model.createFunction([&](LSExpression i, LSExpression prev) {
-//   return model.iif(
-//       i == 0,
-//       model.iif(model.at(earliestArray2, sequence[i]) == -2,
-//                 model.at(earliestArray1, sequence[i]),
-//                 model.iif(distanceWarehousesArray[sequence[0]] + StartDepot[k] >
-//                               model.at(latestArray1, sequence[i]) -
-//                                   model.at(serviceArray, sequence[i]),
-//                           model.at(earliestArray2, sequence[i]),
-//                           model.at(earliestArray1, sequence[i]))),
-//       model.iif(model.at(earliestArray2, sequence[i]) == -2,
-//                 model.at(earliestArray1, sequence[i]),
-//                 model.iif(prev + model.at(distanceArray, sequence[i - 1], sequence[i])
-//                 >
-//                               model.at(latestArray1, sequence[i]) -
-//                                   model.at(serviceArray, sequence[i]),
-//                           model.at(earliestArray2, sequence[i]),
-//                           model.at(earliestArray1, sequence[i]))));
-// });
