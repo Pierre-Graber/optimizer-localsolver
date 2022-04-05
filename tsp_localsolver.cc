@@ -283,10 +283,12 @@ public:
     serviceSequences.reserve(problem.vehicles_size() + 1);
     for (auto vehicle : problem.vehicles()) {
       serviceSequences.push_back(model.listVar(problem.services_size()));
+      serviceSequences.back().setName("sequence_" + vehicle.id());
     }
 
     // extra_super_vehicle
     serviceSequences.push_back(model.listVar(problem.services_size()));
+    serviceSequences.back().setName("sequence_unassigned");
 
     // Are the vehicles actually used?
     vector<LSExpression> vehiclesUsed;
@@ -311,7 +313,6 @@ public:
     int k = 0;
     for (const auto& vehicle : problem.vehicles()) {
       LSExpression sequence = serviceSequences[k];
-      sequence.setName("sequence_" + to_string(k));
       LSExpression c = model.count(sequence);
 
       vehiclesUsed[k] = c > 0;
