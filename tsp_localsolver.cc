@@ -362,14 +362,13 @@ public:
                            static_cast<lsint>(vehicle.time_window().end()));
         }
       }
-      // LSExpression excessLatenessSelector =
-      //     model.createLambdaFunction([&](LSExpression i) {
-      //       return model.max(
-      //           0, endTime[k][i] - serviceTime[sequence[i]] -
-      //                  (model.at(twAbsoluteEndsArray, i, nbTwsArray[sequence[i]] -
-      //                  1)));
-      //     });
-      // excessLateness[k] = model.sum(model.range(0, c), excessLatenessSelector);
+      LSExpression excessLatenessSelector =
+          model.createLambdaFunction([&](LSExpression i) {
+            return model.max(
+                0, endTime[k][i] - serviceTime[sequence[i]] -
+                       (model.at(twAbsoluteEndsArray, i, nbTwsArray[sequence[i]] - 1)));
+          });
+      excessLateness[k] = model.sum(model.range(0, c), excessLatenessSelector);
 
       for (int unit_i = 0; unit_i < vehicle.capacities_size(); unit_i++) {
         LSExpression quantityCumulator = model.createLambdaFunction([&](LSExpression i) {
@@ -415,8 +414,8 @@ public:
       k++;
     }
 
-    // LSExpression totalExcessLateness =
-    //     model.sum(excessLateness.begin(), excessLateness.end());
+    LSExpression totalExcessLateness =
+        model.sum(excessLateness.begin(), excessLateness.end());
     // model.constraint(totalExcessLateness == 0);
 
     LSExpression unassignedServices = serviceSequences[problem.vehicles_size()];
@@ -439,8 +438,7 @@ public:
     totalDuration.setName("totalDuration");
 
     // model.minimize(nbVehiclesUsed);
-
-    // model.minimize(totalExcessLateness);
+    model.minimize(totalExcessLateness);
     model.minimize(totalExclusionCost);
     model.minimize(totalDuration);
 
@@ -523,9 +521,9 @@ public:
         cout << IndexId(servicesCollection[i]) << " ";
       }
       cout << endl;
-      // cout << " total Absolute Latenness " << totalExcessLateness.getValue() << endl;
-      //   cout << "assigned service(s) to " << problem.vehicles(v).id()
-      //        << " " + serviceSequences[v].getCollectionValue().toString() << endl;
+      cout << " total Absolute Latenness " << totalExcessLateness.getValue() << endl;
+      cout << "assigned service(s) to " << problem.vehicles(v).id()
+           << " " + serviceSequences[v].getCollectionValue().toString() << endl;
     }
     for (int i = 0; i < model.getNbObjectives(); i++) {
       cout << model.getObjective(i).toString() << endl;
