@@ -335,6 +335,11 @@ public:
 
       endTime[k] = model.array(model.range(0, c), endSelector);
 
+      LSExpression beginTimeSelector = model.createLambdaFunction(
+          [&](LSExpression i) { return endTime[k][i] - serviceTime[sequence[i]]; });
+
+      beginTime[k] = model.array(model.range(0, c), beginTimeSelector);
+
       routeDuration[k] = model.iif(
           c > 0,
           endTime[k][c - 1] + timesToWarehouses[vehicle.matrix_index()]
@@ -524,6 +529,19 @@ public:
       cout << " total Absolute Latenness " << totalExcessLateness.getValue() << endl;
       cout << "assigned service(s) to " << problem.vehicles(v).id()
            << " " + serviceSequences[v].getCollectionValue().toString() << endl;
+      cout << endl;
+
+      cout << " ----------------------begin times--------------------------  " << endl;
+      for (int k = 0; k < problem.vehicles_size(); k++) {
+        cout << "begin times service of " << problem.vehicles(k).id() << " "
+             << beginTime[k].getArrayValue().toString() << endl;
+      }
+      cout << " ----------------------End times--------------------------  " << endl;
+      for (int k = 0; k < problem.vehicles_size(); k++) {
+        cout << "end times service of " << problem.vehicles(k).id() << " "
+             << endTime[k].getArrayValue().toString() << endl;
+      }
+      cout << endl;
     }
     for (int i = 0; i < model.getNbObjectives(); i++) {
       cout << model.getObjective(i).toString() << endl;
