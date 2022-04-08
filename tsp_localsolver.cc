@@ -80,6 +80,7 @@ public:
   LSExpression twEndsArray;
   LSExpression twAbsoluteEndsArray;
   LSExpression nbTwsArray;
+  LSExpression waitNextTWArray;
   LSExpression twEndSelect(const LSExpression& service, const LSExpression& time) {
     LSExpression timeWindowSelector =
         model.createLambdaFunction([&](LSExpression tw_index) {
@@ -150,7 +151,8 @@ public:
       , vehicleCapacitiesMatrix(model.array())
       , twStartsArray(model.array())
       , twEndsArray(model.array())
-      , twAbsoluteEndsArray(model.array()) {
+      , twAbsoluteEndsArray(model.array())
+      , waitNextTWArray(model.array()) {
     for (const auto& matrix : problem.matrices()) {
       MatrixBuilder(timeMatrices, matrix.time());
       cout << timeMatrices.rbegin()->toString() << endl;
@@ -244,6 +246,7 @@ public:
     int s = 0;
     for (const auto& service : problem.services()) {
       serviceMatrixIndexVec.push_back(service.matrix_index());
+      waitNextTWArray.addOperand(model.boolVar());
       serviceTimeVec.push_back(service.duration());
       serviceSetUpDurationVec.push_back(service.setup_duration());
       vector<float> serviceQuantityUnit;
