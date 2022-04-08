@@ -369,19 +369,22 @@ public:
       }
       LSExpression excessLatenessSelector =
           model.createLambdaFunction([&](LSExpression i) {
-            return model.max(
-                0, endTime[k][i] - serviceTime[sequence[i]] -
-                       (model.at(twAbsoluteEndsArray, i, nbTwsArray[sequence[i]] - 1)));
+            // excess lateness is only calculated wrt the very last absolute end
+            // because nextStart() can't return an infeasable intermediate time.
+            return model.max(0, endTime[k][i] - serviceTime[sequence[i]] -
+                                    (model.at(twAbsoluteEndsArray, sequence[i],
+                                              nbTwsArray[sequence[i]] - 1)));
           });
       excessLateness[k] = model.sum(model.range(0, c), excessLatenessSelector);
 
-      for (int unit_i = 0; unit_i < vehicle.capacities_size(); unit_i++) {
-        LSExpression quantityCumulator = model.createLambdaFunction([&](LSExpression i) {
-          return model.at(serviceQuantitiesMatrix, sequence[i], unit_i);
-        });
-        LSExpression routeQuantities = model.sum(model.range(0, c), quantityCumulator);
-        model.constraint(routeQuantities <= model.at(vehicleCapacitiesMatrix, k, unit_i));
-      }
+      LSExpression latenessSelector = model.createLambdaFunction([&](LSExpression i) {
+            return model.max(
+                0, endTime[k][i] - serviceTime[sequence[i]] -
+                   twEndSelect(sequence[i], endTime[k][i] - serviceTime[sequence[i]]));
+          });
+
+      // latenessTW = model.range(0, nbTwsArray[sequence[i]]);
+      lateness[k] = model.sum(model.range(0, c), latenessSelector);
 
       for (const auto& relation : problem.relations()) {
         if (relation.type() == "shipment") {
