@@ -63,6 +63,7 @@ public:
   vector<LSExpression> timeMatrices; // the matrices are reordered by service.matrix_index
 
   LSExpression serviceTime;
+  LSExpression serviceSetUpDuration;
   LSExpression serviceQuantitiesMatrix;
   LSExpression serviceExclusionCost;
 
@@ -221,6 +222,7 @@ public:
         model.array(vehicleEndIndiciesVec.begin(), vehicleEndIndiciesVec.end());
 
     vector<int> serviceTimeVec;
+    vector<int> serviceSetUpDurationVec;
     vector<vector<float>> serviceQuantitiesVec;
     vector<float> serviceExclusionCostVec;
     vector<int> nbTWsVec;
@@ -228,6 +230,7 @@ public:
     int s = 0;
     for (const auto& service : problem.services()) {
       serviceTimeVec.push_back(service.duration());
+      serviceSetUpDurationVec.push_back(service.setup_duration());
       vector<float> serviceQuantityUnit;
       serviceQuantitiesVec.push_back(serviceQuantityUnit);
       for (int unit_i = 0; unit_i < service.quantities_size(); unit_i++) {
@@ -268,6 +271,8 @@ public:
     }
 
     serviceTime = model.array(serviceTimeVec.begin(), serviceTimeVec.end());
+    serviceSetUpDuration =
+        model.array(serviceSetUpDurationVec.begin(), serviceSetUpDurationVec.end());
     serviceExclusionCost =
         model.array(serviceExclusionCostVec.begin(), serviceExclusionCostVec.end());
     nbTwsArray = model.array(nbTWsVec.begin(), nbTWsVec.end());
