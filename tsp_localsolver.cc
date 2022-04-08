@@ -265,6 +265,7 @@ public:
       vector<int> serviceTWEnds;
       vector<int> serviceTWAbsoluteEnds;
 
+      if (service.time_windows_size() > 0) {
       for (const auto& tw : service.time_windows()) {
         serviceTWStarts.push_back(tw.start());
         serviceTWEnds.push_back(tw.end());
@@ -273,6 +274,11 @@ public:
         } else {
           serviceTWAbsoluteEnds.push_back(tw.end());
         }
+      }
+      } else {
+        serviceTWStarts.push_back(0);
+        serviceTWEnds.push_back(CUSTOM_MAX_INT);
+        serviceTWAbsoluteEnds.push_back(CUSTOM_MAX_INT);
       }
 
       serviceTWAbsoluteEnds.back();
@@ -283,7 +289,11 @@ public:
       twAbsoluteEndsArray.addOperand(
           model.array(serviceTWAbsoluteEnds.begin(), serviceTWAbsoluteEnds.end()));
 
+      if (service.time_windows_size() == 0) {
+        nbTWsVec.push_back(1);
+      } else {
       nbTWsVec.push_back(service.time_windows_size());
+      }
       ids_map_[(string)service.id()] = s;
       s++;
     }
