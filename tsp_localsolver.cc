@@ -497,18 +497,17 @@ public:
 
     LSExpression totalExcessLateness =
         model.sum(excessLateness.begin(), excessLateness.end());
-    // model.constraint(totalExcessLateness == 0);
+    model.constraint(totalExcessLateness == 0);
 
-    LSExpression unassignedServices = serviceSequences[problem.vehicles_size()];
-    LSExpression c = model.count(unassignedServices);
-    vehiclesUsed[problem.vehicles_size()] = c > 0;
+    LSExpression totalLateness = model.sum(lateness.begin(), lateness.end());
+    totalLateness.setName("total Lateness");
 
     LSExpression exclusionCostCumulator = model.createLambdaFunction(
         [&](LSExpression i) { return serviceExclusionCost[unassignedServices[i]]; });
 
     LSExpression totalExclusionCost =
-        model.sum(model.range(0, c), exclusionCostCumulator);
-    totalExclusionCost.setName("cost");
+        model.sum(model.range(0, numberOfUnassignedServices), exclusionCostCumulator);
+    totalExclusionCost.setName("total Exclusion Cost");
 
     // Total vehicles used :
     nbVehiclesUsed = model.sum(vehiclesUsed.begin(), vehiclesUsed.end());
@@ -519,8 +518,9 @@ public:
     totalDuration.setName("totalDuration");
 
     // model.minimize(nbVehiclesUsed);
-    model.minimize(totalExcessLateness);
+    // model.minimize(totalExcessLateness);
     model.minimize(totalExclusionCost);
+    model.minimize(totalLateness);
     model.minimize(totalDuration);
 
     model.close();
