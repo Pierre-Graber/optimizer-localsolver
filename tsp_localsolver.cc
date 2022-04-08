@@ -534,7 +534,7 @@ public:
 
     localsolver.solve();
 
-    cout << "-----------------------------------------------------------------" << endl;
+    cout << "-------------------- DATA ------------------------------" << endl;
 
     for (auto vehicle : problem.vehicles()) {
       cout << "timeMatrix of : " << vehicle.id() << " "
@@ -549,6 +549,9 @@ public:
                   .getArrayValue()
                   .toString()
            << endl;
+
+      cout << "setup duration of services :"
+           << serviceSetUpDuration.getArrayValue().toString() << endl;
       cout << "maximum duration of " << vehicle.id() << " : " << vehicle.duration()
            << endl;
     }
