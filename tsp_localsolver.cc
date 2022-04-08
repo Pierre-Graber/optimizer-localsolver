@@ -345,8 +345,15 @@ public:
 
       endTime[k] = model.array(model.range(0, c), endSelector);
 
-      LSExpression beginTimeSelector = model.createLambdaFunction(
-          [&](LSExpression i) { return endTime[k][i] - serviceTime[sequence[i]]; });
+      LSExpression beginTimeSelector = model.createLambdaFunction([&](LSExpression i) {
+        return endTime[k][i] - serviceTime[sequence[i]];
+        // to include setup duration of the first service in the begin time calculation
+        // use the following one:
+        // return endTime[k][i] - serviceTime[sequence[i]] -
+        //        model.iif(i > 0 && serviceMatrixIndex[sequence[i]] ==
+        //                               serviceMatrixIndex[sequence[i - 1]],
+        //                  0, serviceSetUpDuration[sequence[i]]);
+      });
 
       beginTime[k] = model.array(model.range(0, c), beginTimeSelector);
 
