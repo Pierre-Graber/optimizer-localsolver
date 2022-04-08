@@ -66,6 +66,7 @@ public:
   LSExpression serviceSetUpDuration;
   LSExpression serviceQuantitiesMatrix;
   LSExpression serviceExclusionCost;
+  LSExpression serviceMatrixIndex;
 
   LSExpression vehicleStartIndicies;
   LSExpression vehicleEndIndicies;
@@ -225,10 +226,12 @@ public:
     vector<int> serviceSetUpDurationVec;
     vector<vector<float>> serviceQuantitiesVec;
     vector<float> serviceExclusionCostVec;
+    vector<int> serviceMatrixIndexVec;
     vector<int> nbTWsVec;
 
     int s = 0;
     for (const auto& service : problem.services()) {
+      serviceMatrixIndexVec.push_back(service.matrix_index());
       serviceTimeVec.push_back(service.duration());
       serviceSetUpDurationVec.push_back(service.setup_duration());
       vector<float> serviceQuantityUnit;
@@ -269,7 +272,8 @@ public:
       ids_map_[(string)service.id()] = s;
       s++;
     }
-
+    serviceMatrixIndex =
+        model.array(serviceMatrixIndexVec.begin(), serviceMatrixIndexVec.end());
     serviceTime = model.array(serviceTimeVec.begin(), serviceTimeVec.end());
     serviceSetUpDuration =
         model.array(serviceSetUpDurationVec.begin(), serviceSetUpDurationVec.end());
