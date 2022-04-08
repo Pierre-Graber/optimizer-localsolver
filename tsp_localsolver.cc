@@ -366,51 +366,54 @@ public:
     // Constraints for each vehicle
     int k = 0;
     for (const auto& vehicle : problem.vehicles()) {
-      LSExpression sequence = serviceSequences[k];
-      LSExpression c = model.count(sequence);
+      LSExpression sequenceVehicle = serviceSequences[k];
+      LSExpression c = model.count(sequenceVehicle);
 
       vehiclesUsed[k] = c > 0;
       vehiclesUsed[k].setName("vehicleUsed_" + to_string(k));
 
-      LSExpression endSelector = model.createLambdaFunction([&](LSExpression i,
-                                                                LSExpression prev) {
-        return nextStart(
-                   sequence[i],
-                   model.iif(i == 0,
-                             ((vehicle.has_time_window())
-                                  ? static_cast<lsint>(vehicle.time_window().start())
-                                  : 0) +
-                                 timesFromWarehouses[vehicle.matrix_index()]
-                                                    [vehicle.start_index()][sequence[i]] +
-                                 serviceSetUpDuration[sequence[i]],
-                             prev +
-                                 model.at(timeMatrices[vehicle.matrix_index()],
-                                          sequence[i - 1], sequence[i]) +
-                                 model.iif(serviceMatrixIndex[sequence[i]] ==
-                                               serviceMatrixIndex[sequence[i - 1]],
-                                           0, serviceSetUpDuration[sequence[i]]))) +
-               serviceTime[sequence[i]];
-      });
+      LSExpression endSelector =
+          model.createLambdaFunction([&](LSExpression i, LSExpression prev) {
+            return nextStart(
+                       sequenceVehicle[i],
+                       model.iif(
+                           i == 0,
+                           ((vehicle.has_time_window())
+                                ? static_cast<lsint>(vehicle.time_window().start())
+                                : 0) +
+                               timesFromWarehouses[vehicle.matrix_index()]
+                                                  [vehicle.start_index()]
+                                                  [sequenceVehicle[i]] +
+                               serviceSetUpDuration[sequenceVehicle[i]],
+                           prev +
+                               model.at(timeMatrices[vehicle.matrix_index()],
+                                        sequenceVehicle[i - 1], sequenceVehicle[i]) +
+                               model.iif(serviceMatrixIndex[sequenceVehicle[i]] ==
+                                             serviceMatrixIndex[sequenceVehicle[i - 1]],
+                                         0, serviceSetUpDuration[sequenceVehicle[i]]))) +
+                   serviceTime[sequenceVehicle[i]];
+          });
 
       endTime[k] = model.array(model.range(0, c), endSelector);
 
       LSExpression beginTimeSelector = model.createLambdaFunction([&](LSExpression i) {
-        return endTime[k][i] - serviceTime[sequence[i]];
+        return endTime[k][i] - serviceTime[sequenceVehicle[i]];
         // to include setup duration of the first service in the begin time calculation
         // use the following one:
-        // return endTime[k][i] - serviceTime[sequence[i]] -
-        //        model.iif(i > 0 && serviceMatrixIndex[sequence[i]] ==
-        //                               serviceMatrixIndex[sequence[i - 1]],
-        //                  0, serviceSetUpDuration[sequence[i]]);
+        // return endTime[k][i] - serviceTime[sequenceVehicle[i]] -
+        //        model.iif(i > 0 && serviceMatrixIndex[sequenceVehicle[i]] ==
+        //                               serviceMatrixIndex[sequenceVehicle[i - 1]],
+        //                  0, serviceSetUpDuration[sequenceVehicle[i]]);
       });
 
       beginTime[k] = model.array(model.range(0, c), beginTimeSelector);
 
-      routeDuration[k] = model.iif(
-          c > 0,
-          endTime[k][c - 1] + timesToWarehouses[vehicle.matrix_index()]
-                                               [vehicle.end_index()][sequence[c - 1]],
-          0);
+      routeDuration[k] =
+          model.iif(c > 0,
+                    endTime[k][c - 1] +
+                        timesToWarehouses[vehicle.matrix_index()][vehicle.end_index()]
+                                         [sequenceVehicle[c - 1]],
+                    0);
 
       if (vehicle.duration() > 0 &&
           (!vehicle.has_time_window() ||
@@ -437,26 +440,27 @@ public:
           model.createLambdaFunction([&](LSExpression i) {
             // excess lateness is only calculated wrt the very last absolute end
             // because nextStart() can't return an infeasable intermediate time.
-            return model.max(0, endTime[k][i] - serviceTime[sequence[i]] -
-                                    (model.at(twAbsoluteEndsArray, sequence[i],
-                                              nbTwsArray[sequence[i]] - 1)));
+            return model.max(0, endTime[k][i] - serviceTime[sequenceVehicle[i]] -
+                                    (model.at(twAbsoluteEndsArray, sequenceVehicle[i],
+                                              nbTwsArray[sequenceVehicle[i]] - 1)));
           });
       excessLateness[k] = model.sum(model.range(0, c), excessLatenessSelector);
 
       LSExpression latenessSelector = model.createLambdaFunction([&](LSExpression i) {
         return model.max(
-            0, endTime[k][i] - serviceTime[sequence[i]] -
-                   twEndSelect(sequence[i], endTime[k][i] - serviceTime[sequence[i]]));
+            0, endTime[k][i] - serviceTime[sequenceVehicle[i]] -
+                   twEndSelect(sequenceVehicle[i],
+                               endTime[k][i] - serviceTime[sequenceVehicle[i]]));
       });
 
-      // latenessTW = model.range(0, nbTwsArray[sequence[i]]);
+      // latenessTW = model.range(0, nbTwsArray[sequenceVehicle[i]]);
       lateness[k] = model.sum(model.range(0, c), latenessSelector);
 
       for (int unit = 0; unit < vehicle.capacities_size(); unit++) {
         LSExpression quantityCumulator =
             model.createLambdaFunction([&](LSExpression i, LSExpression prev) {
               return model.max(
-                  0, prev + model.at(serviceQuantitiesMatrix, sequence[i], unit));
+                  0, prev + model.at(serviceQuantitiesMatrix, sequenceVehicle[i], unit));
             });
         LSExpression routeQuantityUnit =
             model.array(model.range(0, c), quantityCumulator);
@@ -472,24 +476,27 @@ public:
           for (int link_index = 0; link_index < relation.linked_ids_size() - 1;
                link_index++) {
             model.constraint(
-                model.contains(sequence, static_cast<lsint>(
-                                             IdIndex(relation.linked_ids(link_index)))) ==
-                model.contains(sequence, static_cast<lsint>(IdIndex(
-                                             relation.linked_ids(link_index + 1)))));
+                model.contains(sequenceVehicle, static_cast<lsint>(IdIndex(
+                                                    relation.linked_ids(link_index)))) ==
+                model.contains(
+                    sequenceVehicle,
+                    static_cast<lsint>(IdIndex(relation.linked_ids(link_index + 1)))));
             model.constraint(
-                model.indexOf(sequence, static_cast<lsint>(
-                                            IdIndex(relation.linked_ids(link_index)))) <=
-                model.indexOf(sequence, static_cast<lsint>(IdIndex(
-                                            relation.linked_ids(link_index + 1)))));
+                model.indexOf(sequenceVehicle, static_cast<lsint>(IdIndex(
+                                                   relation.linked_ids(link_index)))) <=
+                model.indexOf(
+                    sequenceVehicle,
+                    static_cast<lsint>(IdIndex(relation.linked_ids(link_index + 1)))));
           }
         }
         if (relation.type() == "order") {
           for (int link_index = 0; link_index < relation.linked_ids_size() - 1;
                link_index++) {
             LSExpression sequenceContainsCurrentService = model.contains(
-                sequence, static_cast<lsint>(IdIndex(relation.linked_ids(link_index))));
+                sequenceVehicle,
+                static_cast<lsint>(IdIndex(relation.linked_ids(link_index))));
             LSExpression sequenceContainsNextService = model.contains(
-                sequence,
+                sequenceVehicle,
                 static_cast<lsint>(IdIndex(relation.linked_ids(link_index + 1))));
             LSExpression nextIsNotAssigned = model.contains(
                 unassignedServices,
@@ -501,10 +508,11 @@ public:
             model.constraint(model.iif(
                 sequenceContainsNextService,
 
-                model.indexOf(sequence, static_cast<lsint>(
-                                            IdIndex(relation.linked_ids(link_index)))) <=
-                    model.indexOf(sequence, static_cast<lsint>(IdIndex(
-                                                relation.linked_ids(link_index + 1)))),
+                model.indexOf(sequenceVehicle, static_cast<lsint>(IdIndex(
+                                                   relation.linked_ids(link_index)))) <=
+                    model.indexOf(
+                        sequenceVehicle,
+                        static_cast<lsint>(IdIndex(relation.linked_ids(link_index + 1)))),
                 true));
           }
         }
