@@ -80,6 +80,16 @@ public:
   LSExpression twEndsArray;
   LSExpression twAbsoluteEndsArray;
   LSExpression nbTwsArray;
+  LSExpression twEndSelect(const LSExpression& service, const LSExpression& time) {
+    LSExpression timeWindowSelector =
+        model.createLambdaFunction([&](LSExpression tw_index) {
+          return model.iif(model.at(twAbsoluteEndsArray, service, tw_index) >= time &&
+                               model.at(twStartsArray, service, tw_index) <= time,
+                           model.at(twEndsArray, service, tw_index),
+                           model.at(twEndsArray, service, nbTwsArray[service] - 1));
+        });
+    return model.min(model.range(0, nbTwsArray[service]), timeWindowSelector);
+  }
 
   LSExpression nextStart(const LSExpression& service, const LSExpression& time) {
     LSExpression timeSelector = model.createLambdaFunction([&](LSExpression tw_index) {
