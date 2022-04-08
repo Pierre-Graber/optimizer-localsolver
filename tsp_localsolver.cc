@@ -92,16 +92,18 @@ public:
   }
 
   LSExpression nextStart(const LSExpression& service, const LSExpression& time) {
-    LSExpression timeSelector = model.createLambdaFunction([&](LSExpression tw_index) {
-      return model.iif(model.at(twAbsoluteEndsArray, service, tw_index) >= time,
-                       model.at(twStartsArray, service, tw_index),
+    LSExpression timeWindowSelector =
+        model.createLambdaFunction([&](LSExpression tw_index) {
+          LSExpression twDecisionAbsoluteEnd = model.iif(
+              waitNextTWArray[service], model.at(twAbsoluteEndsArray, service, tw_index),
+              model.at(twEndsArray, service, tw_index));
+          return model.iif(
+              twDecisionAbsoluteEnd >= time, model.at(twStartsArray, service, tw_index),
                        model.at(twAbsoluteEndsArray, service, nbTwsArray[service] - 1));
     });
-
     LSExpression earliestAvailableTime =
         model.iif(nbTwsArray[service] == 0, 0,
-                  model.min(model.range(0, nbTwsArray[service]), timeSelector));
-
+                  model.min(model.range(0, nbTwsArray[service]), timeWindowSelector));
     return model.max(time, earliestAvailableTime);
   }
 
