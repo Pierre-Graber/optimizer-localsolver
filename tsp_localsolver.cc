@@ -649,26 +649,24 @@ public:
         cout << IndexId(servicesCollection[i]) << " ";
       }
       cout << endl;
-
-      cout << " ----------------------begin times--------------------------  " << endl;
-      for (int k = 0; k < problem.vehicles_size(); k++) {
-        cout << "begin times service of " << problem.vehicles(k).id() << " "
-             << beginTime[k].getArrayValue().toString() << endl;
-      }
-      cout << " ----------------------End times--------------------------  " << endl;
-      for (int k = 0; k < problem.vehicles_size(); k++) {
-        cout << "end times service of " << problem.vehicles(k).id() << " "
-             << endTime[k].getArrayValue().toString() << endl;
-        cout << "total route duration :  " << problem.vehicles(k).id() << " "
-             << routeDuration[k].getValue() << endl;
-      }
-      cout << endl;
-      cout << " -------------------- LATENESS -----------------------------------"
-           << endl;
-      cout << " total Absolute Latenness " << totalExcessLateness.getValue() << endl;
-      cout << " total Latenness " << totalLateness.getValue() << endl;
-      cout << endl;
     }
+    cout << " ----------------------begin times--------------------------  " << endl;
+    for (int k = 0; k < problem.vehicles_size(); k++) {
+      cout << "begin times service of " << problem.vehicles(k).id() << " "
+           << beginTime[k].getArrayValue().toString() << endl;
+    }
+    cout << " ----------------------End times--------------------------  " << endl;
+    for (int k = 0; k < problem.vehicles_size(); k++) {
+      cout << "end times service of " << problem.vehicles(k).id() << " "
+           << endTime[k].getArrayValue().toString() << endl;
+      cout << "total route duration :  " << problem.vehicles(k).id() << " "
+           << routeDuration[k].getValue() << endl;
+    }
+    cout << endl;
+    cout << " -------------------- LATENESS -----------------------------------" << endl;
+    cout << " total Absolute Latenness " << totalExcessLateness.getValue() << endl;
+    cout << " total Latenness " << totalLateness.getValue() << endl;
+    cout << endl;
 
     cout << " -------------------- OBJECTIVE -----------------------------------" << endl;
     for (int i = 0; i < model.getNbObjectives(); i++) {
