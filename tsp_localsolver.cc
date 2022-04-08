@@ -437,7 +437,8 @@ public:
           for (int unit = 0; unit < vehicle.capacities_size(); unit++) {
             LSExpression quantityCumulator =
                 model.createLambdaFunction([&](LSExpression i, LSExpression prev) {
-                  return prev + model.at(serviceQuantitiesMatrix, sequence[i], unit);
+              return model.max(
+                  0, prev + model.at(serviceQuantitiesMatrix, sequence[i], unit));
                 });
             LSExpression routeQuantityUnit =
                 model.array(model.range(0, c), quantityCumulator);
