@@ -508,6 +508,29 @@ public:
                 true));
           }
         }
+        if (relation.type() == "sequence") {
+          for (int link_index = 0; link_index < relation.linked_ids_size() - 1;
+               link_index++) {
+            LSExpression sequenceContainsCurrentService = model.contains(
+                sequenceVehicle,
+                static_cast<lsint>(IdIndex(relation.linked_ids(link_index))));
+            LSExpression sequenceContainsNextService = model.contains(
+                sequenceVehicle,
+                static_cast<lsint>(IdIndex(relation.linked_ids(link_index + 1))));
+            LSExpression currentServiceIndexInSequence = model.indexOf(
+                sequenceVehicle,
+                static_cast<lsint>(IdIndex(relation.linked_ids(link_index))));
+            LSExpression nextServiceIndexInSequence = model.indexOf(
+                sequenceVehicle,
+                static_cast<lsint>(IdIndex(relation.linked_ids(link_index + 1))));
+
+            model.constraint(sequenceContainsCurrentService ==
+                             sequenceContainsNextService);
+            model.constraint(model.iif(
+                sequenceContainsCurrentService,
+                currentServiceIndexInSequence + 1 == nextServiceIndexInSequence, true));
+          }
+        }
       }
       k++;
     }
