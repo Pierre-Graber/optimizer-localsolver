@@ -81,6 +81,22 @@ public:
   LSExpression twAbsoluteEndsArray;
   LSExpression nbTwsArray;
   LSExpression waitNextTWArray;
+
+  // LSExpression nextStart(const LSExpression& service, const LSExpression& time) {
+  //   LSExpression timeSelector = model.createLambdaFunction([&](LSExpression tw_index) {
+  //     return model.iif(model.at(twAbsoluteEndsArray, service, tw_index) >= time,
+  //                      model.at(twStartsArray, service, tw_index),
+  //                      model.at(twAbsoluteEndsArray, service, nbTwsArray[service] -
+  //                      1));
+  //   });
+
+  //   LSExpression earliestAvailableTime =
+  //       model.iif(nbTwsArray[service] == 0, 0,
+  //                 model.min(model.range(0, nbTwsArray[service]), timeSelector));
+
+  //   return model.max(time, earliestAvailableTime);
+  // }
+
   LSExpression twEndSelect(const LSExpression& service, const LSExpression& time) {
     LSExpression timeWindowSelector =
         model.createLambdaFunction([&](LSExpression tw_index) {
@@ -100,8 +116,8 @@ public:
               model.at(twEndsArray, service, tw_index));
           return model.iif(
               twDecisionAbsoluteEnd >= time, model.at(twStartsArray, service, tw_index),
-                       model.at(twAbsoluteEndsArray, service, nbTwsArray[service] - 1));
-    });
+              model.at(twAbsoluteEndsArray, service, nbTwsArray[service] - 1));
+        });
     LSExpression earliestAvailableTime =
         model.iif(nbTwsArray[service] == 0, 0,
                   model.min(model.range(0, nbTwsArray[service]), timeWindowSelector));
@@ -266,15 +282,15 @@ public:
       vector<int> serviceTWAbsoluteEnds;
 
       if (service.time_windows_size() > 0) {
-      for (const auto& tw : service.time_windows()) {
-        serviceTWStarts.push_back(tw.start());
-        serviceTWEnds.push_back(tw.end());
-        if (service.late_multiplier() > 0) {
-          serviceTWAbsoluteEnds.push_back(tw.end() + tw.maximum_lateness());
-        } else {
-          serviceTWAbsoluteEnds.push_back(tw.end());
+        for (const auto& tw : service.time_windows()) {
+          serviceTWStarts.push_back(tw.start());
+          serviceTWEnds.push_back(tw.end());
+          if (service.late_multiplier() > 0) {
+            serviceTWAbsoluteEnds.push_back(tw.end() + tw.maximum_lateness());
+          } else {
+            serviceTWAbsoluteEnds.push_back(tw.end());
+          }
         }
-      }
       } else {
         serviceTWStarts.push_back(0);
         serviceTWEnds.push_back(CUSTOM_MAX_INT);
@@ -292,7 +308,7 @@ public:
       if (service.time_windows_size() == 0) {
         nbTWsVec.push_back(1);
       } else {
-      nbTWsVec.push_back(service.time_windows_size());
+        nbTWsVec.push_back(service.time_windows_size());
       }
       ids_map_[(string)service.id()] = s;
       s++;
@@ -428,30 +444,28 @@ public:
       excessLateness[k] = model.sum(model.range(0, c), excessLatenessSelector);
 
       LSExpression latenessSelector = model.createLambdaFunction([&](LSExpression i) {
-            return model.max(
-                0, endTime[k][i] - serviceTime[sequence[i]] -
+        return model.max(
+            0, endTime[k][i] - serviceTime[sequence[i]] -
                    twEndSelect(sequence[i], endTime[k][i] - serviceTime[sequence[i]]));
-          });
+      });
 
       // latenessTW = model.range(0, nbTwsArray[sequence[i]]);
       lateness[k] = model.sum(model.range(0, c), latenessSelector);
 
-      for (const auto& relation : problem.relations()) {
-        if (relation.type() == "shipment") {
-          for (int unit = 0; unit < vehicle.capacities_size(); unit++) {
-            LSExpression quantityCumulator =
-                model.createLambdaFunction([&](LSExpression i, LSExpression prev) {
+      for (int unit = 0; unit < vehicle.capacities_size(); unit++) {
+        LSExpression quantityCumulator =
+            model.createLambdaFunction([&](LSExpression i, LSExpression prev) {
               return model.max(
                   0, prev + model.at(serviceQuantitiesMatrix, sequence[i], unit));
-                });
-            LSExpression routeQuantityUnit =
-                model.array(model.range(0, c), quantityCumulator);
-            LSExpression quantityUnitChecker =
-                model.createLambdaFunction([&](LSExpression i) {
-                  return routeQuantityUnit[i] <= vehicle.capacities(unit).limit();
-                });
-            model.constraint(model.and_(model.range(0, c), quantityUnitChecker));
-          }
+            });
+        LSExpression routeQuantityUnit =
+            model.array(model.range(0, c), quantityCumulator);
+        LSExpression quantityUnitChecker =
+            model.createLambdaFunction([&](LSExpression i) {
+              return routeQuantityUnit[i] <= vehicle.capacities(unit).limit();
+            });
+        model.constraint(model.and_(model.range(0, c), quantityUnitChecker));
+      }
 
       for (const auto& relation : problem.relations()) {
         if (relation.type() == "shipment") {
@@ -495,7 +509,6 @@ public:
           }
         }
       }
-
       k++;
     }
 
