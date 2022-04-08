@@ -414,6 +414,34 @@ public:
                                             relation.linked_ids(link_index + 1)))));
           }
         }
+        if (relation.type() == "order") {
+          for (int link_index = 0; link_index < relation.linked_ids_size() - 1;
+               link_index++) {
+            LSExpression sequenceContainsCurrentService = model.contains(
+                sequence, static_cast<lsint>(IdIndex(relation.linked_ids(link_index))));
+            LSExpression sequenceContainsNextService = model.contains(
+                sequence,
+                static_cast<lsint>(IdIndex(relation.linked_ids(link_index + 1))));
+            LSExpression currentIsNotAssigned = model.contains(
+                unassignedServices,
+                static_cast<lsint>(IdIndex(relation.linked_ids(link_index))));
+            LSExpression nextIsNotAssigned = model.contains(
+                unassignedServices,
+                static_cast<lsint>(IdIndex(relation.linked_ids(link_index + 1))));
+
+            model.constraint(model.iif(sequenceContainsCurrentService,
+                                       sequenceContainsNextService || nextIsNotAssigned,
+                                       !sequenceContainsNextService));
+            model.constraint(
+                model.indexOf(sequence, static_cast<lsint>(
+                                            IdIndex(relation.linked_ids(link_index)))) <=
+                model.iif(
+                    sequenceContainsNextService,
+                    model.indexOf(sequence, static_cast<lsint>(IdIndex(
+                                                relation.linked_ids(link_index + 1)))),
+                    model.count(sequence)));
+          }
+        }
       }
 
       k++;
