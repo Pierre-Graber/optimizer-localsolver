@@ -327,9 +327,14 @@ public:
                                   ? static_cast<lsint>(vehicle.time_window().start())
                                   : 0) +
                                  timesFromWarehouses[vehicle.matrix_index()]
-                                                    [vehicle.start_index()][sequence[0]],
-                             prev + model.at(timeMatrices[vehicle.matrix_index()],
-                                             sequence[i - 1], sequence[i]))) +
+                                                    [vehicle.start_index()][sequence[i]] +
+                                 serviceSetUpDuration[sequence[i]],
+                             prev +
+                                 model.at(timeMatrices[vehicle.matrix_index()],
+                                          sequence[i - 1], sequence[i]) +
+                                 model.iif(serviceMatrixIndex[sequence[i]] ==
+                                               serviceMatrixIndex[sequence[i - 1]],
+                                           0, serviceSetUpDuration[sequence[i]]))) +
                serviceTime[sequence[i]];
       });
 
