@@ -448,8 +448,9 @@ public:
                 });
             model.constraint(model.and_(model.range(0, c), quantityUnitChecker));
           }
-        }
-        if (relation.type() == "order" || relation.type() == "shipment") {
+
+      for (const auto& relation : problem.relations()) {
+        if (relation.type() == "shipment") {
           for (int link_index = 0; link_index < relation.linked_ids_size() - 1;
                link_index++) {
             model.constraint(
@@ -472,9 +473,6 @@ public:
             LSExpression sequenceContainsNextService = model.contains(
                 sequence,
                 static_cast<lsint>(IdIndex(relation.linked_ids(link_index + 1))));
-            LSExpression currentIsNotAssigned = model.contains(
-                unassignedServices,
-                static_cast<lsint>(IdIndex(relation.linked_ids(link_index))));
             LSExpression nextIsNotAssigned = model.contains(
                 unassignedServices,
                 static_cast<lsint>(IdIndex(relation.linked_ids(link_index + 1))));
@@ -482,14 +480,14 @@ public:
             model.constraint(model.iif(sequenceContainsCurrentService,
                                        sequenceContainsNextService || nextIsNotAssigned,
                                        !sequenceContainsNextService));
-            model.constraint(
+            model.constraint(model.iif(
+                sequenceContainsNextService,
+
                 model.indexOf(sequence, static_cast<lsint>(
                                             IdIndex(relation.linked_ids(link_index)))) <=
-                model.iif(
-                    sequenceContainsNextService,
                     model.indexOf(sequence, static_cast<lsint>(IdIndex(
                                                 relation.linked_ids(link_index + 1)))),
-                    model.count(sequence)));
+                true));
           }
         }
       }
