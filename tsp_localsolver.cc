@@ -343,6 +343,10 @@ public:
         model.partition(serviceSequences.begin(), serviceSequences.end());
     model.constraint(partition);
 
+    LSExpression unassignedServices = serviceSequences[problem.vehicles_size()];
+    LSExpression numberOfUnassignedServices = model.count(unassignedServices);
+    vehiclesUsed[problem.vehicles_size()] = numberOfUnassignedServices > 0;
+
     // Constraints for each vehicle
     int k = 0;
     for (const auto& vehicle : problem.vehicles()) {
