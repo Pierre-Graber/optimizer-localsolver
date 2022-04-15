@@ -63,6 +63,7 @@ public:
   vector<LSExpression> timeMatrices; // the matrices are reordered by service.matrix_index
 
   LSExpression serviceTime;
+  LSExpression serviceLateMultiplier;
   LSExpression serviceSetUpDuration;
   LSExpression serviceQuantitiesMatrix;
   LSExpression serviceExclusionCost;
@@ -336,6 +337,7 @@ public:
         model.array(vehicleEndIndiciesVec.begin(), vehicleEndIndiciesVec.end());
 
     vector<int> serviceTimeVec;
+    vector<int> serviceLateMultiplierVec;
     vector<int> serviceSetUpDurationVec;
     vector<vector<float>> serviceQuantitiesVec;
     vector<float> serviceExclusionCostVec;
@@ -347,6 +349,7 @@ public:
       serviceMatrixIndexVec.push_back(service.matrix_index());
       waitNextTWArray.addOperand(model.boolVar());
       serviceTimeVec.push_back(service.duration());
+      serviceLateMultiplierVec.push_back(service.late_multiplier());
       serviceSetUpDurationVec.push_back(service.setup_duration());
       vector<float> serviceQuantityUnit;
       serviceQuantitiesVec.push_back(serviceQuantityUnit);
@@ -399,6 +402,8 @@ public:
     serviceMatrixIndex =
         model.array(serviceMatrixIndexVec.begin(), serviceMatrixIndexVec.end());
     serviceTime = model.array(serviceTimeVec.begin(), serviceTimeVec.end());
+    serviceLateMultiplier =
+        model.array(serviceLateMultiplierVec.begin(), serviceLateMultiplierVec.end());
     serviceSetUpDuration =
         model.array(serviceSetUpDurationVec.begin(), serviceSetUpDurationVec.end());
     serviceExclusionCost =
@@ -542,15 +547,16 @@ public:
           });
       excessLateness[k] = model.sum(model.range(0, c), excessLatenessSelector);
 
-      LSExpression latenessSelector = model.createLambdaFunction([&](LSExpression i) {
-        return model.max(
+      LSExpression latenessCostSelector = model.createLambdaFunction([&](LSExpression i) {
+        return serviceLateMultiplier[sequenceVehicle[i]] *
+               model.max(
             0, endTime[k][i] - serviceTime[sequenceVehicle[i]] -
                    twEndSelect(sequenceVehicle[i],
                                endTime[k][i] - serviceTime[sequenceVehicle[i]]));
       });
 
       // latenessTW = model.range(0, nbTwsArray[sequenceVehicle[i]]);
-      lateness[k] = model.sum(model.range(0, c), latenessSelector);
+      latenessCost[k] = model.sum(model.range(0, c), latenessCostSelector);
 
       for (int unit = 0; unit < vehicle.capacities_size(); unit++) {
         LSExpression quantityCumulator =
@@ -643,8 +649,10 @@ public:
         model.sum(excessLateness.begin(), excessLateness.end());
     model.constraint(totalExcessLateness == 0);
 
-    LSExpression totalLateness = model.sum(lateness.begin(), lateness.end());
-    totalLateness.setName("total Lateness");
+    LSExpression totalLatenessCost = model.sum(latenessCost.begin(), latenessCost.end());
+    totalLatenessCost.setName("total Lateness Cost");
+
+    LSExpression totalWaitingTime = model.sum(waitingTime.begin(), waitingTime.end());
 
     LSExpression exclusionCostCumulator = model.createLambdaFunction(
         [&](LSExpression i) { return serviceExclusionCost[unassignedServices[i]]; });
