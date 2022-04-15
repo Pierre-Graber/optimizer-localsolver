@@ -558,90 +558,9 @@ public:
       // latenessTW = model.range(0, nbTwsArray[sequenceVehicle[i]]);
       latenessCost[k] = model.sum(model.range(0, c), latenessCostSelector);
 
-      for (int unit = 0; unit < vehicle.capacities_size(); unit++) {
-        LSExpression quantityCumulator =
-            model.createLambdaFunction([&](LSExpression i, LSExpression prev) {
-              return model.max(
-                  0, prev + model.at(serviceQuantitiesMatrix, sequenceVehicle[i], unit));
-            });
-        LSExpression routeQuantityUnit =
-            model.array(model.range(0, c), quantityCumulator);
-        LSExpression quantityUnitChecker =
-            model.createLambdaFunction([&](LSExpression i) {
-              return routeQuantityUnit[i] <= vehicle.capacities(unit).limit();
-            });
-        model.constraint(model.and_(model.range(0, c), quantityUnitChecker));
-      }
+      capacityConstraintsOfVehicle(k, sequenceVehicle, c);
 
-      for (const auto& relation : problem.relations()) {
-        if (relation.type() == "shipment") {
-          for (int link_index = 0; link_index < relation.linked_ids_size() - 1;
-               link_index++) {
-            model.constraint(
-                model.contains(sequenceVehicle, static_cast<lsint>(IdIndex(
-                                                    relation.linked_ids(link_index)))) ==
-                model.contains(
-                    sequenceVehicle,
-                    static_cast<lsint>(IdIndex(relation.linked_ids(link_index + 1)))));
-            model.constraint(
-                model.indexOf(sequenceVehicle, static_cast<lsint>(IdIndex(
-                                                   relation.linked_ids(link_index)))) <=
-                model.indexOf(
-                    sequenceVehicle,
-                    static_cast<lsint>(IdIndex(relation.linked_ids(link_index + 1)))));
-          }
-        }
-        if (relation.type() == "order") {
-          for (int link_index = 0; link_index < relation.linked_ids_size() - 1;
-               link_index++) {
-            LSExpression sequenceContainsCurrentService = model.contains(
-                sequenceVehicle,
-                static_cast<lsint>(IdIndex(relation.linked_ids(link_index))));
-            LSExpression sequenceContainsNextService = model.contains(
-                sequenceVehicle,
-                static_cast<lsint>(IdIndex(relation.linked_ids(link_index + 1))));
-            LSExpression nextIsNotAssigned = model.contains(
-                unassignedServices,
-                static_cast<lsint>(IdIndex(relation.linked_ids(link_index + 1))));
-
-            model.constraint(model.iif(sequenceContainsCurrentService,
-                                       sequenceContainsNextService || nextIsNotAssigned,
-                                       !sequenceContainsNextService));
-            model.constraint(model.iif(
-                sequenceContainsNextService,
-
-                model.indexOf(sequenceVehicle, static_cast<lsint>(IdIndex(
-                                                   relation.linked_ids(link_index)))) <=
-                    model.indexOf(
-                        sequenceVehicle,
-                        static_cast<lsint>(IdIndex(relation.linked_ids(link_index + 1)))),
-                true));
-          }
-        }
-        if (relation.type() == "sequence") {
-          for (int link_index = 0; link_index < relation.linked_ids_size() - 1;
-               link_index++) {
-            LSExpression sequenceContainsCurrentService = model.contains(
-                sequenceVehicle,
-                static_cast<lsint>(IdIndex(relation.linked_ids(link_index))));
-            LSExpression sequenceContainsNextService = model.contains(
-                sequenceVehicle,
-                static_cast<lsint>(IdIndex(relation.linked_ids(link_index + 1))));
-            LSExpression currentServiceIndexInSequence = model.indexOf(
-                sequenceVehicle,
-                static_cast<lsint>(IdIndex(relation.linked_ids(link_index))));
-            LSExpression nextServiceIndexInSequence = model.indexOf(
-                sequenceVehicle,
-                static_cast<lsint>(IdIndex(relation.linked_ids(link_index + 1))));
-
-            model.constraint(sequenceContainsCurrentService ==
-                             sequenceContainsNextService);
-            model.constraint(model.iif(
-                sequenceContainsCurrentService,
-                currentServiceIndexInSequence + 1 == nextServiceIndexInSequence, true));
-          }
-        }
-      }
+      RelationBuilder(sequenceVehicle, unassignedServices);
       k++;
     }
 
