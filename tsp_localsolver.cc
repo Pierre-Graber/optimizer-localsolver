@@ -124,6 +124,74 @@ public:
     return model.max(time, earliestAvailableTime);
   }
 
+  void RelationBuilder(LSExpression& sequenceVehicle, LSExpression& unassignedServices) {
+    for (const auto& relation : problem.relations()) {
+      if (relation.type() == "shipment") {
+        for (int link_index = 0; link_index < relation.linked_ids_size() - 1;
+             link_index++) {
+          model.constraint(
+              model.contains(sequenceVehicle, static_cast<lsint>(IdIndex(
+                                                  relation.linked_ids(link_index)))) ==
+              model.contains(sequenceVehicle, static_cast<lsint>(IdIndex(
+                                                  relation.linked_ids(link_index + 1)))));
+          model.constraint(
+              model.indexOf(sequenceVehicle, static_cast<lsint>(IdIndex(
+                                                 relation.linked_ids(link_index)))) <=
+              model.indexOf(sequenceVehicle, static_cast<lsint>(IdIndex(
+                                                 relation.linked_ids(link_index + 1)))));
+        }
+      }
+      if (relation.type() == "order") {
+        for (int link_index = 0; link_index < relation.linked_ids_size() - 1;
+             link_index++) {
+          LSExpression sequenceContainsCurrentService = model.contains(
+              sequenceVehicle,
+              static_cast<lsint>(IdIndex(relation.linked_ids(link_index))));
+          LSExpression sequenceContainsNextService = model.contains(
+              sequenceVehicle,
+              static_cast<lsint>(IdIndex(relation.linked_ids(link_index + 1))));
+          LSExpression nextIsNotAssigned = model.contains(
+              unassignedServices,
+              static_cast<lsint>(IdIndex(relation.linked_ids(link_index + 1))));
+
+          model.constraint(model.iif(sequenceContainsCurrentService,
+                                     sequenceContainsNextService || nextIsNotAssigned,
+                                     !sequenceContainsNextService));
+          model.constraint(model.iif(
+              sequenceContainsNextService,
+
+              model.indexOf(sequenceVehicle, static_cast<lsint>(IdIndex(
+                                                 relation.linked_ids(link_index)))) <=
+                  model.indexOf(
+                      sequenceVehicle,
+                      static_cast<lsint>(IdIndex(relation.linked_ids(link_index + 1)))),
+              true));
+        }
+      }
+      if (relation.type() == "sequence") {
+        for (int link_index = 0; link_index < relation.linked_ids_size() - 1;
+             link_index++) {
+          LSExpression sequenceContainsCurrentService = model.contains(
+              sequenceVehicle,
+              static_cast<lsint>(IdIndex(relation.linked_ids(link_index))));
+          LSExpression sequenceContainsNextService = model.contains(
+              sequenceVehicle,
+              static_cast<lsint>(IdIndex(relation.linked_ids(link_index + 1))));
+          LSExpression currentServiceIndexInSequence =
+              model.indexOf(sequenceVehicle,
+                            static_cast<lsint>(IdIndex(relation.linked_ids(link_index))));
+          LSExpression nextServiceIndexInSequence = model.indexOf(
+              sequenceVehicle,
+              static_cast<lsint>(IdIndex(relation.linked_ids(link_index + 1))));
+
+          model.constraint(sequenceContainsCurrentService == sequenceContainsNextService);
+          model.constraint(model.iif(
+              sequenceContainsCurrentService,
+              currentServiceIndexInSequence + 1 == nextServiceIndexInSequence, true));
+        }
+      }
+    }
+  }
   void MatrixBuilder(vector<LSExpression>& Matrices, const RepeatedField<float>& matrix) {
     LSExpression Matrix(model.array());
     int matrix_size = sqrt(matrix.size());
