@@ -192,6 +192,21 @@ public:
       }
     }
   }
+  void capacityConstraintsOfVehicle(int k, LSExpression sequenceVehicle, LSExpression c) {
+    const localsolver_vrp::Vehicle& vehicle = problem.vehicles(k);
+    for (int unit = 0; unit < vehicle.capacities_size(); unit++) {
+      LSExpression quantityCumulator =
+          model.createLambdaFunction([&](LSExpression i, LSExpression prev) {
+            return model.max(
+                0, prev + model.at(serviceQuantitiesMatrix, sequenceVehicle[i], unit));
+          });
+      LSExpression routeQuantityUnit = model.array(model.range(0, c), quantityCumulator);
+      LSExpression quantityUnitChecker = model.createLambdaFunction([&](LSExpression i) {
+        return routeQuantityUnit[i] <= vehicle.capacities(unit).limit();
+      });
+      model.constraint(model.and_(model.range(0, c), quantityUnitChecker));
+    }
+  }
   void MatrixBuilder(vector<LSExpression>& Matrices, const RepeatedField<float>& matrix) {
     LSExpression Matrix(model.array());
     int matrix_size = sqrt(matrix.size());
