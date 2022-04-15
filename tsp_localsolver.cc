@@ -433,6 +433,7 @@ public:
     vector<LSExpression> routeDuration(problem.vehicles_size());
     vector<LSExpression> endTime(problem.vehicles_size());
     vector<LSExpression> beginTime(problem.vehicles_size());
+    vector<LSExpression> waitingTime(problem.vehicles_size());
     vector<LSExpression> serviceStartsInTW(problem.vehicles_size());
     vector<LSExpression> lateness(problem.vehicles_size());
     vector<LSExpression> excessLateness(problem.vehicles_size());
@@ -490,6 +491,18 @@ public:
       });
 
       beginTime[k] = model.array(model.range(0, c), beginTimeSelector);
+
+      LSExpression waitingTimeSelector = model.createLambdaFunction([&](LSExpression i) {
+        return model.iif(
+            i == 0,
+            beginTime[k][i] -
+                timesFromWarehouses[vehicle.matrix_index()][vehicle.start_index()]
+                                   [sequenceVehicle[i]],
+            model.max(0, beginTime[k][i] - endTime[k][i - 1] -
+                             model.at(timeMatrices[vehicle.matrix_index()],
+                                      sequenceVehicle[i - 1], sequenceVehicle[i])));
+      });
+      waitingTime[k] = model.sum(model.range(0, c), waitingTimeSelector);
 
       routeDuration[k] =
           model.iif(c > 0,
@@ -739,11 +752,10 @@ public:
            << beginTime[k].getArrayValue().toString() << endl;
     }
     cout << " ----------------------End times--------------------------  " << endl;
-    for (int k = 0; k < problem.vehicles_size(); k++) {
-      cout << "end times service of " << problem.vehicles(k).id() << " "
-           << endTime[k].getArrayValue().toString() << endl;
-      cout << "total route duration :  " << problem.vehicles(k).id() << " "
-           << routeDuration[k].getValue() << endl;
+    cout << " ----------------------Waiting times--------------------------  " << endl;
+    for (int v = 0; v < problem.vehicles_size(); v++) {
+      cout << "waiting time service of " << problem.vehicles(v).id() << " "
+           << waitingTime[v].getValue() << endl;
     }
     cout << endl;
     cout << " -------------------- LATENESS -----------------------------------" << endl;
