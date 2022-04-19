@@ -673,12 +673,28 @@ public:
       }
       cout << endl;
     }
-    cout << " ----------------------begin times--------------------------  " << endl;
-    for (int k = 0; k < problem.vehicles_size(); k++) {
-      cout << "begin times service of " << problem.vehicles(k).id() << " "
-           << beginTime[k].getArrayValue().toString() << endl;
+    cout << " ----------------------Number of Vehicles Used --------------------------  "
+         << endl;
+    cout << "nbVehicle Used : " << nbVehiclesUsed.getValue() << endl;
+
+    cout << " ----------------------Begin times--------------------------  " << endl;
+    for (int v = 0; v < problem.vehicles_size(); v++) {
+      cout << "begin times service of " << problem.vehicles(v).id() << " "
+           << beginTime[v].getArrayValue().toString() << endl;
     }
+
     cout << " ----------------------End times--------------------------  " << endl;
+    for (int v = 0; v < problem.vehicles_size(); v++) {
+      cout << "end times service of " << problem.vehicles(v).id() << " "
+           << endTime[v].getArrayValue().toString() << endl;
+      // for (int endTimeIndex = 0; endTimeIndex <
+      // model.count(endTime[v]).getIntValue();
+      //      endTimeIndex++) {
+      //   cout << model.at(endTime, v, endTimeIndex).getIntValue() << endl;
+      // }
+      cout << "total route duration :  " << problem.vehicles(v).id() << " "
+           << routeDuration[v].getValue() << endl;
+    }
     cout << " ----------------------Waiting times--------------------------  " << endl;
     for (int v = 0; v < problem.vehicles_size(); v++) {
       cout << "waiting time service of " << problem.vehicles(v).id() << " "
