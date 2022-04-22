@@ -748,17 +748,88 @@ int main(int argc, char** argv) {
     cout << "Failed to parse protobuf." << endl;
   }
 
-  for (auto vehicle : problem.vehicles()) {
-    vehicle.PrintDebugString();
+  for (const auto& vehicle : problem.vehicles()) {
+    cout << "cost waiting time multiplier : " << vehicle.cost_waiting_time_multiplier()
+         << endl;
+    cout << "cost time multiplier : " << vehicle.cost_time_multiplier() << endl;
+    if (!(vehicle.cost_waiting_time_multiplier() == vehicle.cost_time_multiplier()) &&
+        !(vehicle.cost_waiting_time_multiplier() == 0)) {
+      throw std::invalid_argument(" cost_waiting_time_multiplier is not implemented yet");
+    }
+    if (vehicle.max_ride_distance()) {
+      throw std::invalid_argument(" ERROR ======================= "
+                                  " Max ride distance is not implemented yet");
+    }
+    if (vehicle.max_ride_time())
+      throw std::invalid_argument(" ERROR ======================== "
+                                  "Max ride time is not implemented yet");
+    if (vehicle.value_matrix_index()) {
+      throw std::invalid_argument(" ERROR ======================= "
+                                  "Value matrix is not implemented yet");
+    }
+    if (vehicle.cost_value_multiplier()) {
+      throw std::invalid_argument(" ERROR ======================= "
+                                  "cost_value_multiplier is not implemented yet");
+    }
+    if (vehicle.free_approach()) {
+      throw std::invalid_argument(" ERROR ======================= "
+                                  "free_approach is not implemented yet");
+    }
+    if (vehicle.free_return()) {
+      throw std::invalid_argument(" ERROR ======================= "
+                                  "free_return is not implemented yet");
+    }
+    if (vehicle.rests_size() > 0) {
+      throw std::invalid_argument(" ERROR ======================= "
+                                  "rests are not implemented yet");
+    }
+    if ((!vehicle.shift_preference().empty()) &&
+        (vehicle.shift_preference() != "minimize_span")) {
+      throw std::invalid_argument(" ERROR ======================= "
+                                  "shift_preference is not implemented yet");
+    }
+    if (vehicle.additional_service() != 0) {
+      throw std::invalid_argument(" ERROR ======================= "
+                                  "additional service is not implemented yet");
+    }
+    if (vehicle.additional_setup() != 0) {
+      throw std::invalid_argument(" ERROR ======================= "
+                                  "additional setup is not implemented yet");
+    }
+
+    if (vehicle.coef_service() && vehicle.coef_service() != 1) {
+      throw std::invalid_argument(" ERROR ======================= "
+                                  "coef_service is not implemented yet");
+    }
+    if (vehicle.coef_setup() && vehicle.coef_setup() != 1) {
+      throw std::invalid_argument(" ERROR ======================= "
+                                  "coef_setup is not implemented yet");
+    }
+    // for (const auto& capacity : vehicle.capacities()) {
+    //   if (capacity.overload_multiplier() > 0) {
+    //     throw std::invalid_argument(" ERROR ======================= "
+    //                                 "overload_multiplier is not implemented yet");
+    //   }
+    // }
   }
 
-  for (auto matrix : problem.matrices()) {
-    for (int i = 0; i < sqrt(matrix.time_size()); i++) {
-      for (int j = 0; j < sqrt(matrix.time_size()); j++) {
-        cout << matrix.time(i * sqrt(matrix.time_size()) + j);
+  for (const auto& service : problem.services()) {
+    cout << " refill quantity size : " << service.refill_quantities_size() << endl;
+    for (uint quantity_index = 0; quantity_index < service.refill_quantities_size();
+         quantity_index++) {
+      cout << " service refoil quantity " << service.refill_quantities(quantity_index)
+           << endl;
+      if (service.refill_quantities(quantity_index)) {
+        throw std::invalid_argument(" ERROR ======================= "
+                                    " refill quantities are not implemented yet");
       }
-      cout << endl;
     }
+    if (service.priority() != 4) {
+      throw std::invalid_argument(" ERROR ======================= "
+                                  " priority of service are not implemented yet");
+    }
+  }
+};
   }
 
   for (auto service : problem.services()) {
