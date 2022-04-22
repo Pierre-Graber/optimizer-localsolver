@@ -241,6 +241,23 @@ public:
     return "not found";
   }
 
+  void setInitialSolution() {
+    for (const auto& route : problem.routes()) {
+      LSExpression listExpr =
+          localsolver.getModel().getExpression("sequence_" + route.vehicle_id());
+      LSCollection sequence = listExpr.getCollectionValue();
+      for (const auto& service_id : route.service_ids()) {
+        sequence.add(IdIndex(service_id));
+      }
+    }
+    if (problem.routes_size() > 0) {
+      LSExpression listExpr =
+          localsolver.getModel().getExpression("sequence_" + problem.vehicles(0).id());
+      cout << "Test" << listExpr.getCollectionValue().toString() << endl;
+      cout << endl;
+    }
+  }
+
   // Constructor
   localsolver_VRP(localsolver_vrp::Problem& pb)
       : problem(pb)
@@ -595,6 +612,8 @@ public:
     model.minimize(totalDuration);
 
     model.close();
+
+    setInitialSolution();
 
     cout << model.toString() << endl;
     localsolver.getParam().setTimeLimit(FLAGS_time_limit_in_ms / 1000);
