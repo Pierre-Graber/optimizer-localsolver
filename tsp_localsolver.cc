@@ -556,7 +556,7 @@ public:
       }
       LSExpression excessLatenessSelector =
           model.createLambdaFunction([&](LSExpression i) {
-            // excess lateness is only calculated wrt the very last absolute end
+            // excess latenessCost is only calculated wrt the very last absolute end
             // because nextStart() can't return an infeasable intermediate time.
             return model.max(0, endTime[k][i] - serviceTime[sequenceVehicle[i]] -
                                     (model.at(twAbsoluteEndsArray, sequenceVehicle[i],
@@ -564,7 +564,7 @@ public:
           });
       excessLateness[k] = model.sum(model.range(0, c), excessLatenessSelector);
 
-      LSExpression latenessCostSelector = model.createLambdaFunction([&](LSExpression i) {
+      LSExpression latenessSelector = model.createLambdaFunction([&](LSExpression i) {
         return serviceLateMultiplier[sequenceVehicle[i]] *
                model.max(
             0, endTime[k][i] - serviceTime[sequenceVehicle[i]] -
@@ -573,7 +573,9 @@ public:
       });
 
       // latenessTW = model.range(0, nbTwsArray[sequenceVehicle[i]]);
-      latenessCost[k] = model.sum(model.range(0, c), latenessCostSelector);
+      latenessService[k] = model.array(model.range(0, c), latenessSelector);
+
+      latenessCost[k] = model.sum(model.range(0, c), latenessSelector);
 
       capacityConstraintsOfVehicle(k, sequenceVehicle, c);
 
