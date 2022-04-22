@@ -1,7 +1,9 @@
 
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
+#include <cstddef>
 #include <fstream>
 #include <iomanip>
 #include <lsarray.h>
@@ -9,6 +11,7 @@
 #include <lsexpression.h>
 #include <lssolution.h>
 #include <ostream>
+#include <stdexcept>
 #include <string>
 #include <typeinfo>
 #include <vector>
@@ -208,6 +211,7 @@ public:
       model.constraint(model.and_(model.range(0, c), quantityUnitChecker));
     }
   }
+
   void MatrixBuilder(vector<LSExpression>& Matrices, const RepeatedField<float>& matrix) {
     LSExpression Matrix(model.array());
     int matrix_size = sqrt(matrix.size());
@@ -256,6 +260,32 @@ public:
       cout << "Test" << listExpr.getCollectionValue().toString() << endl;
       cout << endl;
     }
+  }
+
+  void ParseSolution(localsolver_result::Result* result, vector<LSExpression>& beginTimes,
+                     vector<LSExpression>& servicesSequence, LSExpression nbVehiclesUsed,
+                     vector<LSExpression>& latenessService, LSExpression totalDuration) {
+    result->clear_routes();
+
+    for (int route_index = 0; route_index < nbVehiclesUsed.getValue(); route_index++) {
+      LSCollection servicesCollection =
+          servicesSequence[route_index].getCollectionValue();
+      LSArray beginTimeArray = beginTimes[route_index].getArrayValue();
+      LSArray latenessArray = latenessService[route_index].getArrayValue();
+
+      localsolver_result::Route* route = result->add_routes();
+      for (int activity_index = 0; activity_index < servicesCollection.count();
+           activity_index++) {
+        localsolver_result::Activity* activity = route->add_activities();
+        activity->set_id(IndexId(servicesCollection[activity_index]));
+        activity->set_index(servicesCollection[activity_index] + 1);
+        activity->set_start_time(beginTimeArray.getIntValue(activity_index));
+        activity->set_lateness(latenessArray.getIntValue(activity_index));
+      }
+      auto route_costs = route->mutable_cost_details();
+      // route_costs->set_time(routeDuration[route_index].getValue());
+    }
+    result->set_duration(totalDuration.getValue());
   }
 
   // Constructor
@@ -430,7 +460,7 @@ public:
 
   //   void precedenceConstraints(LSModel& model) {}
 
-  void createModelAndSolve() {
+  void createModelAndSolve(localsolver_result::Result* result) {
     // Decision Variables :
 
     // A tour for each vehicle
@@ -457,7 +487,8 @@ public:
     vector<LSExpression> beginTime(problem.vehicles_size());
     vector<LSExpression> waitingTime(problem.vehicles_size());
     vector<LSExpression> serviceStartsInTW(problem.vehicles_size());
-    vector<LSExpression> lateness(problem.vehicles_size());
+    vector<LSExpression> latenessCost(problem.vehicles_size());
+    vector<LSExpression> latenessService(problem.vehicles_size());
     vector<LSExpression> excessLateness(problem.vehicles_size());
 
     // all services must be satisfied by the vehicles
@@ -567,9 +598,9 @@ public:
       LSExpression latenessSelector = model.createLambdaFunction([&](LSExpression i) {
         return serviceLateMultiplier[sequenceVehicle[i]] *
                model.max(
-            0, endTime[k][i] - serviceTime[sequenceVehicle[i]] -
-                   twEndSelect(sequenceVehicle[i],
-                               endTime[k][i] - serviceTime[sequenceVehicle[i]]));
+                   0, endTime[k][i] - serviceTime[sequenceVehicle[i]] -
+                          twEndSelect(sequenceVehicle[i],
+                                      endTime[k][i] - serviceTime[sequenceVehicle[i]]));
       });
 
       // latenessTW = model.range(0, nbTwsArray[sequenceVehicle[i]]);
@@ -585,7 +616,7 @@ public:
 
     LSExpression totalExcessLateness =
         model.sum(excessLateness.begin(), excessLateness.end());
-    model.constraint(totalExcessLateness == 0);
+    // model.constraint(totalExcessLateness == 0);
 
     LSExpression totalLatenessCost = model.sum(latenessCost.begin(), latenessCost.end());
     totalLatenessCost.setName("total Lateness Cost");
@@ -644,6 +675,9 @@ public:
 
       cout << "setup duration of services :"
            << serviceSetUpDuration.getArrayValue().toString() << endl;
+
+      cout << "late_multiplier services :"
+           << serviceLateMultiplier.getArrayValue().toString() << endl;
       cout << "maximum duration of " << vehicle.id() << " : " << vehicle.duration()
            << endl;
     }
@@ -723,9 +757,13 @@ public:
     }
     cout << endl;
     cout << " -------------------- LATENESS -----------------------------------" << endl;
+
     cout << " total Absolute Latenness " << totalExcessLateness.getValue() << endl;
-    cout << " total Latenness " << totalLateness.getValue() << endl;
+    cout << " total Latenness " << totalLatenessCost.getValue() << endl;
     cout << endl;
+    for (int v_index = 0; v_index < problem.vehicles_size(); v_index++) {
+      cout << latenessService[v_index].getArrayValue().toString() << endl;
+    }
 
     cout << " -------------------- OBJECTIVE -----------------------------------" << endl;
     for (int i = 0; i < model.getNbObjectives(); i++) {
@@ -734,16 +772,13 @@ public:
     cout << endl;
     cout << " ----------------------- END -------------------------------------------"
          << endl;
+
+    // ParseSolution(result, beginTime, serviceSequences, nbVehiclesUsed, latenessCost,
+    //               totalDuration);
   }
 };
 
-int main(int argc, char** argv) {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-  gflags::ParseCommandLineFlags(&argc, &argv, true);
-
-  localsolver_vrp::Problem problem;
-
+void readData(localsolver_vrp::Problem& problem) {
   const string filename = absl::GetFlag(FLAGS_instance_file);
   fstream input(filename, ios::in | ios::binary);
   if (!problem.ParseFromIstream(&input)) {
@@ -832,15 +867,32 @@ int main(int argc, char** argv) {
     }
   }
 };
+
+int main(int argc, char** argv) {
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+  gflags::ParseCommandLineFlags(&argc, &argv, true);
+
+  localsolver_vrp::Problem problem;
+  readData(problem);
+
+  for (auto vehicle : problem.vehicles()) {
+    vehicle.PrintDebugString();
   }
 
   for (auto service : problem.services()) {
     cout << "duration of service " << service.id() << " : " << service.duration() << endl;
+    cout << "exclusion cost :" << service.exclusion_cost() << endl;
   }
+  localsolver_result::Result* result = new localsolver_result::Result;
   localsolver_VRP model(problem);
-  model.createModelAndSolve();
+
+  model.createModelAndSolve(result);
+  if (result != nullptr) {
+    result->PrintDebugString();
+  }
+  delete result;
 
   gflags::ShutDownCommandLineFlags();
-
   return 0;
 }
