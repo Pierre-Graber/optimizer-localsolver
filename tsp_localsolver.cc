@@ -606,10 +606,10 @@ public:
     totalDuration.setName("totalDuration");
 
     // model.minimize(nbVehiclesUsed);
-    // model.minimize(totalExcessLateness);
+    model.minimize(totalExcessLateness);
     model.minimize(totalExclusionCost);
-    model.minimize(totalLateness);
     model.minimize(totalDuration);
+    model.minimize(totalLatenessCost + totalWaitingTime);
 
     model.close();
 
