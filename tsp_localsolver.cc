@@ -246,13 +246,22 @@ public:
   }
 
   void setInitialSolution() {
+    std::unordered_set<string> initializedServiceIds;
     for (const auto& route : problem.routes()) {
       LSExpression listExpr =
           localsolver.getModel().getExpression("sequence_" + route.vehicle_id());
       LSCollection sequence = listExpr.getCollectionValue();
       for (const auto& service_id : route.service_ids()) {
         sequence.add(IdIndex(service_id));
+        initializedServiceIds.insert(service_id);
       }
+    }
+    LSCollection sequenceUnassigned =
+        localsolver.getModel().getExpression("sequence_unassigned").getCollectionValue();
+
+    for (const auto& service : problem.services()) {
+      if (initializedServiceIds.count(service.id()) == 0)
+        sequenceUnassigned.add(IdIndex(service.id()));
     }
     if (problem.routes_size() > 0) {
       LSExpression listExpr =
