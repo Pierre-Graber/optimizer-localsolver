@@ -488,7 +488,7 @@ public:
     vector<LSExpression> waitingTime(problem.vehicles_size());
     vector<LSExpression> serviceStartsInTW(problem.vehicles_size());
     vector<LSExpression> latenessCost(problem.vehicles_size());
-    vector<LSExpression> latenessService(problem.vehicles_size());
+    vector<LSExpression> latenessOfServicesOfVehicle(problem.vehicles_size());
     vector<LSExpression> excessLateness(problem.vehicles_size());
 
     // all services must be satisfied by the vehicles
@@ -604,7 +604,7 @@ public:
       });
 
       // latenessTW = model.range(0, nbTwsArray[sequenceVehicle[i]]);
-      latenessService[k] = model.array(model.range(0, c), latenessSelector);
+      latenessOfServicesOfVehicle[k] = model.array(model.range(0, c), latenessSelector);
 
       latenessCost[k] = model.sum(model.range(0, c), latenessSelector);
 
