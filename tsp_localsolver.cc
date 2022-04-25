@@ -797,8 +797,9 @@ void readData(localsolver_vrp::Problem& problem) {
     cout << "cost waiting time multiplier : " << vehicle.cost_waiting_time_multiplier()
          << endl;
     cout << "cost time multiplier : " << vehicle.cost_time_multiplier() << endl;
-    if (!(vehicle.cost_waiting_time_multiplier() == vehicle.cost_time_multiplier()) &&
-        !(vehicle.cost_waiting_time_multiplier() == 0)) {
+    if (!(equals(vehicle.cost_waiting_time_multiplier(),
+                 vehicle.cost_time_multiplier())) &&
+        !(equals(vehicle.cost_waiting_time_multiplier(), 0))) {
       throw std::invalid_argument(" cost_waiting_time_multiplier is not implemented yet");
     }
     if (vehicle.max_ride_distance()) {
@@ -812,7 +813,7 @@ void readData(localsolver_vrp::Problem& problem) {
       throw std::invalid_argument(" ERROR ======================= "
                                   "Value matrix is not implemented yet");
     }
-    if (vehicle.cost_value_multiplier()) {
+    if (!equals(vehicle.cost_value_multiplier(), 0)) {
       throw std::invalid_argument(" ERROR ======================= "
                                   "cost_value_multiplier is not implemented yet");
     }
@@ -833,20 +834,20 @@ void readData(localsolver_vrp::Problem& problem) {
       throw std::invalid_argument(" ERROR ======================= "
                                   "shift_preference is not implemented yet");
     }
-    if (vehicle.additional_service() != 0) {
+    if (!equals(vehicle.additional_service(), 0)) {
       throw std::invalid_argument(" ERROR ======================= "
                                   "additional service is not implemented yet");
     }
-    if (vehicle.additional_setup() != 0) {
+    if (!equals(vehicle.additional_setup(), 0)) {
       throw std::invalid_argument(" ERROR ======================= "
                                   "additional setup is not implemented yet");
     }
 
-    if (vehicle.coef_service() && vehicle.coef_service() != 1) {
+    if (!equals(vehicle.coef_service(), 1)) {
       throw std::invalid_argument(" ERROR ======================= "
                                   "coef_service is not implemented yet");
     }
-    if (vehicle.coef_setup() && vehicle.coef_setup() != 1) {
+    if (!equals(vehicle.coef_setup(), 1)) {
       throw std::invalid_argument(" ERROR ======================= "
                                   "coef_setup is not implemented yet");
     }
