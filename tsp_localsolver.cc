@@ -861,7 +861,7 @@ void readData(localsolver_vrp::Problem& problem) {
 
   for (const auto& service : problem.services()) {
     cout << " refill quantity size : " << service.refill_quantities_size() << endl;
-    for (uint quantity_index = 0; quantity_index < service.refill_quantities_size();
+    for (int quantity_index = 0; quantity_index < service.refill_quantities_size();
          quantity_index++) {
       cout << " service refoil quantity " << service.refill_quantities(quantity_index)
            << endl;
