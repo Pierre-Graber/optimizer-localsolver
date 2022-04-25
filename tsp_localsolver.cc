@@ -659,8 +659,9 @@ public:
     LSStatistics stats = localsolver.getStatistics();
     long nbOfIterations = stats.getNbIterations();
 
+    if (problem.vehicles_size() > 10) {
+      cout << model.toString() << endl;
     cout << "-------------------- DATA ------------------------------" << endl;
-
     for (auto vehicle : problem.vehicles()) {
       cout << "timeMatrix of : " << vehicle.id() << " "
            << timeMatrices[vehicle.matrix_index()].getArrayValue().toString() << endl;
@@ -730,7 +731,8 @@ public:
       }
       cout << endl;
     }
-    cout << " ----------------------Number of Vehicles Used --------------------------  "
+      cout
+          << " ----------------------Number of Vehicles Used --------------------------  "
          << endl;
     cout << "nbVehicle Used : " << nbVehiclesUsed.getValue() << endl;
 
@@ -758,25 +760,25 @@ public:
            << waitingTime[v].getValue() << endl;
     }
     cout << endl;
-    cout << " -------------------- LATENESS -----------------------------------" << endl;
+      cout << " -------------------- LATENESS -----------------------------------"
+           << endl;
 
     cout << " total Absolute Latenness " << totalExcessLateness.getValue() << endl;
     cout << " total Latenness " << totalLatenessCost.getValue() << endl;
     cout << endl;
     for (int v_index = 0; v_index < problem.vehicles_size(); v_index++) {
-      cout << latenessService[v_index].getArrayValue().toString() << endl;
+        cout << latenessOfServicesOfVehicle[v_index].getArrayValue().toString() << endl;
     }
 
-    cout << " -------------------- OBJECTIVE -----------------------------------" << endl;
+      cout << " -------------------- OBJECTIVE -----------------------------------"
+           << endl;
     for (int i = 0; i < model.getNbObjectives(); i++) {
       cout << model.getObjective(i).toString() << endl;
     }
     cout << endl;
     cout << " ----------------------- END -------------------------------------------"
          << endl;
-
-    // ParseSolution(result, beginTime, serviceSequences, nbVehiclesUsed, latenessCost,
-    //               totalDuration);
+    }
   }
 };
 
