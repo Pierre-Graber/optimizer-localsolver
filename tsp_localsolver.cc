@@ -656,6 +656,8 @@ public:
     cout << iis.toString() << endl;
 
     localsolver.solve();
+    LSStatistics stats = localsolver.getStatistics();
+    long nbOfIterations = stats.getNbIterations();
 
     cout << "-------------------- DATA ------------------------------" << endl;
 
