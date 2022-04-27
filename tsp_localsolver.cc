@@ -720,6 +720,9 @@ public:
 
     cout << model.toString() << endl;
     localsolver.getParam().setTimeLimit(FLAGS_time_limit_in_ms / 1000);
+    if (FLAGS_only_first_solution) {
+      localsolver.getParam().setIterationLimit(1);
+    }
 
     // With ls a LocalSolver object
     auto iis = localsolver.computeInconsistency();
