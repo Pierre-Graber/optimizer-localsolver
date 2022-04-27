@@ -555,6 +555,7 @@ public:
     // Constraints for each vehicle
     int k = 0;
     for (const auto& vehicle : problem.vehicles()) {
+      allVehicleIndices.push_back(k);
       LSExpression sequenceVehicle = serviceSequences[k];
       LSExpression c = model.count(sequenceVehicle);
 
@@ -669,6 +670,18 @@ public:
 
       RelationBuilder(sequenceVehicle, unassignedServices);
       k++;
+    }
+
+    int s = 0;
+    for (auto const& service : problem.services()) {
+      vector<int64> incompatibleVehicleIndices;
+      set_difference(allVehicleIndices.begin(), allVehicleIndices.end(),
+                     service.vehicle_indices().begin(), service.vehicle_indices().end(),
+                     back_inserter(incompatibleVehicleIndices));
+      for (int64 incompatible_vehicle : incompatibleVehicleIndices) {
+        model.constraint(!model.contains(serviceSequences[incompatible_vehicle], s));
+      }
+      s++;
     }
 
     LSExpression totalExcessLateness =
