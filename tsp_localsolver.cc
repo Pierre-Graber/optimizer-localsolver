@@ -629,11 +629,16 @@ public:
 
       if (vehicle.has_time_window() && vehicle.time_window().end() < CUSTOM_MAX_INT) {
         if (vehicle.cost_late_multiplier() > 0) {
-          model.constraint(routeDuration[k] <=
+          model.constraint(
+              routeDuration[k] <=
                            static_cast<lsint>(vehicle.time_window().end() +
-                                              vehicle.time_window().maximum_lateness()));
+                                 vehicle.time_window().maximum_lateness()) +
+                  timesToWarehouses[vehicle.matrix_index()][vehicle.end_index()]
+                                   [sequenceVehicle[c - 1]]);
         } else {
           model.constraint(routeDuration[k] <=
+                           timesToWarehouses[vehicle.matrix_index()][vehicle.end_index()]
+                                            [sequenceVehicle[c - 1]] +
                            static_cast<lsint>(vehicle.time_window().end()));
         }
       }
