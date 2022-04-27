@@ -746,23 +746,18 @@ public:
                   .toString()
            << endl;
 
-      cout << "setup duration of services :"
-           << serviceSetUpDuration.getArrayValue().toString() << endl;
-
-      cout << "late_multiplier services :"
-           << serviceLateMultiplier.getArrayValue().toString() << endl;
-      cout << "maximum duration of " << vehicle.id() << " : " << vehicle.duration()
-           << endl;
+        cout << " Vehicle Time Window Start :  " << vehicle.time_window().start() << endl;
+        cout << " Vehicle Time Window Ends  :  " << vehicle.time_window().end() << endl;
     }
 
     cout << "number of time windows " << nbTwsArray.getArrayValue().toString() << endl;
 
-    cout << " Time Window Starts Array :  " << twStartsArray.getArrayValue().toString()
-         << endl;
+      cout << " Services Time Window Starts Array :  "
+           << twStartsArray.getArrayValue().toString() << endl;
 
-    cout << " Time Window Ends Array :  " << twEndsArray.getArrayValue().toString()
-         << endl;
-    cout << " Time Window Absolute End Array :  "
+      cout << " Services Time Window Ends Array :  "
+           << twEndsArray.getArrayValue().toString() << endl;
+      cout << " Services Time Window Absolute End Array :  "
          << twAbsoluteEndsArray.getArrayValue().toString() << endl;
 
     cout << endl;
