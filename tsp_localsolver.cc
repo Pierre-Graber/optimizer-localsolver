@@ -86,6 +86,16 @@ public:
   LSExpression nbTwsArray;
   LSExpression waitNextTWArray;
 
+  vector<LSExpression> routeDuration;
+  vector<LSExpression> endTime;
+  vector<LSExpression> beginTime;
+  vector<LSExpression> arrivalTime;
+  vector<LSExpression> waitingTime;
+  vector<LSExpression> serviceStartsInTW;
+  vector<LSExpression> latenessCost;
+  vector<LSExpression> latenessOfServicesOfVehicle;
+  vector<LSExpression> excessLateness;
+  vector<int> allVehicleIndices;
   // LSExpression nextStart(const LSExpression& service, const LSExpression& time) {
   //   LSExpression timeSelector = model.createLambdaFunction([&](LSExpression tw_index) {
   //     return model.iif(model.at(twAbsoluteEndsArray, service, tw_index) >= time,
@@ -351,7 +361,16 @@ public:
       , twStartsArray(model.array())
       , twEndsArray(model.array())
       , twAbsoluteEndsArray(model.array())
-      , waitNextTWArray(model.array()) {
+      , waitNextTWArray(model.array())
+      , routeDuration(problem.vehicles_size())
+      , endTime(problem.vehicles_size())
+      , beginTime(problem.vehicles_size())
+      , arrivalTime(problem.vehicles_size())
+      , waitingTime(problem.vehicles_size())
+      , serviceStartsInTW(problem.vehicles_size())
+      , latenessCost(problem.vehicles_size())
+      , latenessOfServicesOfVehicle(problem.vehicles_size())
+      , excessLateness(problem.vehicles_size()) {
     for (const auto& matrix : problem.matrices()) {
       MatrixBuilder(timeMatrices, matrix.time());
       cout << timeMatrices.rbegin()->toString() << endl;
