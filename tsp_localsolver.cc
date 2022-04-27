@@ -271,30 +271,73 @@ public:
     }
   }
 
-  void ParseSolution(localsolver_result::Result* result, vector<LSExpression>& beginTimes,
-                     vector<LSExpression>& servicesSequence, LSExpression nbVehiclesUsed,
-                     vector<LSExpression>& latenessService, LSExpression totalDuration) {
+  void ParseSolution(localsolver_result::Result* result,
+                     const vector<LSExpression>& servicesSequence,
+                     const LSExpression totalDuration,
+                     const vector<LSExpression> vehicleUsed,
+                     const vector<LSExpression>& latenessOfVehicle, long nbOfIterations) {
     result->clear_routes();
 
-    for (int route_index = 0; route_index < nbVehiclesUsed.getValue(); route_index++) {
+    for (int route_index = 0; route_index < problem.vehicles_size(); route_index++) {
+      if (vehicleUsed[route_index].getValue()) {
       LSCollection servicesCollection =
           servicesSequence[route_index].getCollectionValue();
-      LSArray beginTimeArray = beginTimes[route_index].getArrayValue();
-      LSArray latenessArray = latenessService[route_index].getArrayValue();
-
+        LSArray beginTimeArray = beginTime[route_index].getArrayValue();
+        LSArray endTimeArray = endTime[route_index].getArrayValue();
+        LSArray latenessServicesOfVehicleArray =
+            latenessOfServicesOfVehicle[route_index].getArrayValue();
+        LSArray timeToWareHouseArray =
+            timesToWarehouses[problem.vehicles(route_index).matrix_index()]
+                             [problem.vehicles(route_index).end_index()]
+                                 .getArrayValue();
+        LSArray timeFromWareHouseArray =
+            timesFromWarehouses[problem.vehicles(route_index).matrix_index()]
+                               [problem.vehicles(route_index).start_index()]
+                                   .getArrayValue();
       localsolver_result::Route* route = result->add_routes();
+        if (problem.vehicles(route_index).start_index() != -1) {
+          localsolver_result::Activity* start_route = route->add_activities();
+          start_route->set_type("start");
+          start_route->set_index(-1);
+          start_route->set_start_time(
+              beginTimeArray.getIntValue(0) -
+              timeFromWareHouseArray.getIntValue(servicesCollection[0]));
+        }
+
       for (int activity_index = 0; activity_index < servicesCollection.count();
            activity_index++) {
         localsolver_result::Activity* activity = route->add_activities();
+          activity->set_type("service");
         activity->set_id(IndexId(servicesCollection[activity_index]));
-        activity->set_index(servicesCollection[activity_index] + 1);
+          activity->set_index(
+              problem.services(servicesCollection[activity_index]).problem_index());
         activity->set_start_time(beginTimeArray.getIntValue(activity_index));
-        activity->set_lateness(latenessArray.getIntValue(activity_index));
+          activity->set_lateness(
+              latenessServicesOfVehicleArray.getIntValue(activity_index));
+          int quantity_index = 0;
+          for (auto const& quantity :
+               problem.services(servicesCollection[activity_index]).quantities()) {
+            activity->add_quantities(quantity);
+            quantity_index++;
+          }
       }
       auto route_costs = route->mutable_cost_details();
-      // route_costs->set_time(routeDuration[route_index].getValue());
+        route_costs->set_fixed(problem.vehicles(route_index).cost_fixed());
+        route_costs->set_lateness(latenessOfVehicle[route_index].getValue());
+        route_costs->set_time(routeDuration[route_index].getValue());
+        if (problem.vehicles(route_index).end_index() != -1) {
+          localsolver_result::Activity* end_route = route->add_activities();
+          end_route->set_type("end");
+          end_route->set_index(-1);
+          end_route->set_start_time(
+              endTimeArray.getIntValue(servicesCollection.count() - 1) +
+              timeToWareHouseArray.getIntValue(
+                  servicesCollection[servicesCollection.count() - 1]));
+        }
+      }
     }
     result->set_duration(totalDuration.getValue());
+    result->set_iterations(nbOfIterations);
   }
 
   // Constructor
