@@ -854,6 +854,16 @@ public:
                   .getArrayValue()
                   .toString()
            << endl;
+        cout << "distanceFromWarehouses of : " << vehicle.id() << " "
+             << distanceFromWarehouses[vehicle.matrix_index()][vehicle.start_index()]
+                    .getArrayValue()
+                    .toString()
+             << endl;
+        cout << "distanceToWarehouses of : " << vehicle.id() << " "
+             << distanceToWarehouses[vehicle.matrix_index()][vehicle.end_index()]
+                    .getArrayValue()
+                    .toString()
+             << endl;
 
         cout << " Vehicle Time Window Start :  " << vehicle.time_window().start() << endl;
         cout << " Vehicle Time Window Ends  :  " << vehicle.time_window().end() << endl;
