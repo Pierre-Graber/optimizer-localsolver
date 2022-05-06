@@ -374,7 +374,7 @@ public:
       , excessLateness(problem.vehicles_size()) {
     for (const auto& matrix : problem.matrices()) {
       MatrixBuilder(timeMatrices, matrix.time());
-      MatrixBuilder(distanceMatrices, matrix.distance());
+      cout << timeMatrices.rbegin()->toString() << endl;
     }
 
     vector<int> vehicleStartIndiciesVec;
@@ -383,19 +383,30 @@ public:
     int k = 0;
     timesFromWarehouses.resize(problem.matrices_size());
     timesToWarehouses.resize(problem.matrices_size());
+    distanceFromWarehouses.resize(problem.matrices_size());
+    distanceToWarehouses.resize(problem.matrices_size());
     for (const auto& vehicle : problem.vehicles()) {
       int time_matrix_size = sqrt(problem.matrices(vehicle.matrix_index()).time_size());
-      map<int, LSExpression>& vehicleStartMap =
+      int distance_matrix_size =
+          sqrt(problem.matrices(vehicle.matrix_index()).distance_size());
           timesFromWarehouses[vehicle.matrix_index()];
-      if (vehicleStartMap.find(vehicle.start_index()) == vehicleStartMap.end()) {
+      map<int, LSExpression>& vehicleStartMapDistance =
+          distanceFromWarehouses[vehicle.matrix_index()];
+      if (vehicleStartMapTime.find(vehicle.start_index()) == vehicleStartMapTime.end()) {
         vector<int> timesFromWarehouse;
         timesFromWarehouse.reserve(problem.services_size());
         if (vehicle.start_index() > -1) {
+          if (problem.matrices(vehicle.matrix_index()).time().size() > 0) {
           for (const auto& service : problem.services()) {
             timesFromWarehouse.push_back(
                 problem.matrices(vehicle.matrix_index())
                     .time(vehicle.start_index() * time_matrix_size +
                           service.matrix_index()));
+          }
+        } else {
+            for (const auto& service : problem.services()) {
+              timesFromWarehouse.push_back(0);
+            }
           }
         } else {
           timesFromWarehouse.resize(problem.services_size());
@@ -404,8 +415,33 @@ public:
         vehicleStartMap[vehicle.start_index()] =
             model.array(timesFromWarehouse.begin(), timesFromWarehouse.end());
       }
-      map<int, LSExpression>& vehicleEndMap = timesToWarehouses[vehicle.matrix_index()];
-      if (vehicleEndMap.find(vehicle.end_index()) == vehicleEndMap.end()) {
+      if (vehicleStartMapDistance.find(vehicle.start_index()) ==
+          vehicleStartMapDistance.end()) {
+        vector<int> distanceFromWarehouse;
+        distanceFromWarehouse.reserve(problem.services_size());
+        if (vehicle.start_index() > -1) {
+          if (problem.matrices(vehicle.matrix_index()).distance().size() > 0) {
+            for (const auto& service : problem.services()) {
+              distanceFromWarehouse.push_back(
+                  problem.matrices(vehicle.matrix_index())
+                      .distance(vehicle.start_index() * distance_matrix_size +
+                                service.matrix_index()));
+            }
+          } else {
+            for (const auto& service : problem.services()) {
+              distanceFromWarehouse.push_back(0);
+            }
+          }
+        } else {
+          distanceFromWarehouse.resize(problem.services_size());
+          fill_n(distanceFromWarehouse.begin(), problem.services_size(), 0);
+        }
+        vehicleStartMapDistance[vehicle.start_index()] =
+            model.array(distanceFromWarehouse.begin(), distanceFromWarehouse.end());
+      }
+      map<int, LSExpression>& vehicleEndMapTime =
+          timesToWarehouses[vehicle.matrix_index()];
+      if (vehicleEndMapTime.find(vehicle.end_index()) == vehicleEndMapTime.end()) {
         vector<int> timesToWarehouse;
         timesToWarehouse.reserve(problem.services_size());
         if (vehicle.end_index() > -1) {
@@ -416,16 +452,48 @@ public:
                           vehicle.end_index()));
           }
         } else {
+            for (const auto& service : problem.services()) {
+              timesToWarehouse.push_back(0);
+            }
+          }
+        } else {
           timesToWarehouse.resize(problem.services_size());
           fill_n(timesToWarehouse.begin(), problem.services_size(), 0);
         }
         vehicleEndMap[vehicle.end_index()] =
             model.array(timesToWarehouse.begin(), timesToWarehouse.end());
       }
-      cout << vehicle.id() << " " << vehicleStartMap[vehicle.start_index()].toString()
-           << endl;
-      cout << vehicle.id() << " " << vehicleEndMap[vehicle.end_index()].toString()
-           << endl;
+      map<int, LSExpression>& vehicleEndMapTimeDistance =
+          distanceToWarehouses[vehicle.matrix_index()];
+      if (vehicleEndMapTimeDistance.find(vehicle.end_index()) ==
+          vehicleEndMapTimeDistance.end()) {
+        vector<int> distanceToWarehouse;
+        distanceToWarehouse.reserve(problem.services_size());
+        if (vehicle.end_index() > -1) {
+          if (problem.matrices(vehicle.matrix_index()).distance().size() > 0) {
+            for (const auto& service : problem.services()) {
+              distanceToWarehouse.push_back(
+                  problem.matrices(vehicle.matrix_index())
+                      .distance(service.matrix_index() * distance_matrix_size +
+                                vehicle.end_index()));
+            }
+          } else {
+            for (const auto& service : problem.services()) {
+              distanceToWarehouse.push_back(0);
+            }
+          }
+        } else {
+          distanceToWarehouse.resize(problem.services_size());
+          fill_n(distanceToWarehouse.begin(), problem.services_size(), 0);
+        }
+        vehicleEndMapTimeDistance[vehicle.end_index()] =
+            model.array(distanceToWarehouse.begin(), distanceToWarehouse.end());
+      }
+      // cout << vehicle.id() << " " <<
+      // vehicleStartMapTime[vehicle.start_index()].toString()
+      //      << endl;
+      // cout << vehicle.id() << " " << vehicleEndMapTime[vehicle.end_index()].toString()
+      //      << endl;
 
       int matrix_size =
           max(sqrt(problem.matrices(vehicle.matrix_index()).time_size()),
@@ -582,6 +650,20 @@ public:
       vehiclesUsed[k] = c > 0;
       vehiclesUsed[k].setName("vehicleUsed_" + to_string(k));
 
+      LSExpression distSelector = model.createLambdaFunction([&](LSExpression i) {
+        return model.at(distanceMatrices[vehicle.matrix_index()], sequenceVehicle[i - 1],
+                        sequenceVehicle[i]);
+      });
+      routeDistance[k] =
+          model.sum(model.range(1, c), distSelector) +
+          model.iif(c > 0,
+                    distanceFromWarehouses[vehicle.matrix_index()][vehicle.start_index()]
+                                          [sequenceVehicle[0]] +
+                        distanceToWarehouses[vehicle.matrix_index()][vehicle.end_index()]
+                                            [sequenceVehicle[c - 1]],
+                    0);
+
+      // End of each visit
       LSExpression endSelector =
           model.createLambdaFunction([&](LSExpression i, LSExpression prev) {
             return nextStart(
@@ -728,6 +810,10 @@ public:
     totalDuration = model.sum(routeDuration.begin(), routeDuration.end());
     totalDuration.setName("totalDuration");
 
+    // Total distance traveled :
+    LSExpression totalDistance;
+    totalDistance = model.sum(routeDistance.begin(), routeDistance.end());
+    totalDistance.setName("totalDistance");
     // model.minimize(nbVehiclesUsed);
     model.minimize(totalExcessLateness);
     model.minimize(totalExclusionCost);
