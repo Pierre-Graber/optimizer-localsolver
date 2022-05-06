@@ -374,7 +374,7 @@ public:
       , excessLateness(problem.vehicles_size()) {
     for (const auto& matrix : problem.matrices()) {
       MatrixBuilder(timeMatrices, matrix.time());
-      cout << timeMatrices.rbegin()->toString() << endl;
+      MatrixBuilder(distanceMatrices, matrix.distance());
     }
 
     vector<int> vehicleStartIndiciesVec;
