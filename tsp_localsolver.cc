@@ -128,9 +128,10 @@ public:
           LSExpression twDecisionAbsoluteEnd = model.iif(
               waitNextTWArray[service], model.at(twAbsoluteEndsArray, service, tw_index),
               model.at(twEndsArray, service, tw_index));
-          return model.iif(
-              twDecisionAbsoluteEnd >= time, model.at(twStartsArray, service, tw_index),
-              model.at(twAbsoluteEndsArray, service, nbTwsArray[service] - 1));
+          return model.iif(twDecisionAbsoluteEnd >= time,
+                           model.at(twStartsArray, service, tw_index),
+                           model.min(time, model.at(twAbsoluteEndsArray, service,
+                                                    nbTwsArray[service] - 1)));
         });
     LSExpression earliestAvailableTime =
         model.iif(nbTwsArray[service] == 0, 0,
