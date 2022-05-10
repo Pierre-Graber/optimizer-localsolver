@@ -1,5 +1,5 @@
 OR_TOOLS_TOP=../or-tools
-LOCALSOLVER_TOP = /opt/localsolver_10_5
+LOCALSOLVER_TOP = /opt/localsolver_11_0
 
 CFLAGS := -std=c++17 -isystem $(OR_TOOLS_TOP)/include -isystem $(LOCALSOLVER_TOP)/include
 
@@ -43,7 +43,7 @@ tsp_localsolver.o: tsp_localsolver.cc \
 
 tsp_localsolver: tsp_localsolver.o localsolver_vrp.pb.o localsolver_result.pb.o
 	$(CXX) $(CFLAGS) -g tsp_localsolver.o localsolver_vrp.pb.o localsolver_result.pb.o -lz -lrt -lpthread \
-	-L$(LOCALSOLVER_TOP)/bin -llocalsolver105 \
+	-L$(LOCALSOLVER_TOP)/bin -llocalsolver110 \
 	-L $(OR_TOOLS_TOP)/lib -Wl,-rpath $(OR_TOOLS_TOP)/lib -lortools -lprotobuf -lglog -lgflags -labsl_raw_hash_set -labsl_time -labsl_time_zone \
 	-o tsp_localsolver
 
