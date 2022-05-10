@@ -332,10 +332,6 @@ public:
     result->clear_routes();
 
     for (int route_index = 0; route_index < problem.vehicles_size(); route_index++) {
-      if (vehicleUsed[route_index].getValue()) {
-        LSCollection servicesCollection =
-            servicesSequence[route_index].getCollectionValue();
-
         LSArray beginTimeArray = beginTime[route_index].getArrayValue();
         LSArray arrivalTimeArray = arrivalTime[route_index].getArrayValue();
         LSArray endTimeArray = endTime[route_index].getArrayValue();
@@ -349,6 +345,10 @@ public:
             timesFromWarehouses[problem.vehicles(route_index).matrix_index()]
                                [problem.vehicles(route_index).start_index()]
                                    .getArrayValue();
+      LSCollection servicesCollection =
+          servicesSequence[route_index].getCollectionValue();
+
+      if (vehicleUsed[route_index].getValue() == 1) {
         localsolver_result::Route* route = result->add_routes();
         if (problem.vehicles(route_index).start_index() != -1) {
           localsolver_result::Activity* start_route = route->add_activities();
@@ -389,6 +389,20 @@ public:
               endTimeArray.getIntValue(servicesCollection.count() - 1) +
               timeToWareHouseArray.getIntValue(
                   servicesCollection[servicesCollection.count() - 1]));
+        }
+      } else {
+        localsolver_result::Route* route = result->add_routes();
+        if (problem.vehicles(route_index).start_index() != -1) {
+          localsolver_result::Activity* start_route = route->add_activities();
+          start_route->set_type("start");
+          start_route->set_index(-1);
+          start_route->set_start_time(timeLeavingTheWarehouse[route_index].getIntValue());
+        }
+        if (problem.vehicles(route_index).end_index() != -1) {
+          localsolver_result::Activity* end_route = route->add_activities();
+          end_route->set_type("end");
+          end_route->set_index(-1);
+          end_route->set_start_time(timeLeavingTheWarehouse[route_index].getIntValue());
         }
       }
     }
