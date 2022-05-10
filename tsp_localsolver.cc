@@ -288,7 +288,10 @@ public:
                      const vector<LSExpression>& servicesSequence,
                      const LSExpression totalDuration,
                      const vector<LSExpression> vehicleUsed,
-                     const vector<LSExpression>& latenessOfVehicle, long nbOfIterations) {
+                     const vector<LSExpression>& latenessOfVehicle) {
+    LSStatistics stats = localsolver.getStatistics();
+    long nbOfIterations = stats.getNbIterations();
+    int runningTime = stats.getRunningTime();
     result->clear_routes();
 
     for (int route_index = 0; route_index < problem.vehicles_size(); route_index++) {
