@@ -18,6 +18,7 @@
 
 #include "./localsolver_result.pb.h"
 #include "./localsolver_vrp.pb.h"
+// #include "callback_ls.cpp"
 #include "localsolver.h"
 #include "ortools/base/commandlineflags.h"
 
@@ -64,12 +65,15 @@ public:
   LocalSolver localsolver;
   LSModel model;
   vector<LSExpression> timeMatrices; // the matrices are reordered by service.matrix_index
+  vector<LSExpression>
+      distanceMatrices; // the matrices are reordered by service.matrix_index
 
   LSExpression serviceTime;
   LSExpression serviceLateMultiplier;
   LSExpression serviceSetUpDuration;
   LSExpression serviceQuantitiesMatrix;
   LSExpression serviceExclusionCost;
+  LSExpression servicePriority;
   LSExpression serviceMatrixIndex;
 
   LSExpression vehicleStartIndicies;
@@ -80,6 +84,9 @@ public:
   vector<map<int, LSExpression>> timesFromWarehouses;
   vector<map<int, LSExpression>> timesToWarehouses;
 
+  vector<map<int, LSExpression>> distanceFromWarehouses;
+  vector<map<int, LSExpression>> distanceToWarehouses;
+
   LSExpression twStartsArray;
   LSExpression twEndsArray;
   LSExpression twAbsoluteEndsArray;
@@ -87,6 +94,10 @@ public:
   LSExpression waitNextTWArray;
 
   vector<LSExpression> routeDuration;
+  vector<LSExpression> routeDurationCost;
+  vector<LSExpression> routeDistance;
+  vector<LSExpression> routeDistanceCost;
+  vector<LSExpression> routeFixedCost;
   vector<LSExpression> endTime;
   vector<LSExpression> beginTime;
   vector<LSExpression> arrivalTime;
@@ -96,20 +107,9 @@ public:
   vector<LSExpression> latenessOfServicesOfVehicle;
   vector<LSExpression> excessLateness;
   vector<int> allVehicleIndices;
-  // LSExpression nextStart(const LSExpression& service, const LSExpression& time) {
-  //   LSExpression timeSelector = model.createLambdaFunction([&](LSExpression tw_index) {
-  //     return model.iif(model.at(twAbsoluteEndsArray, service, tw_index) >= time,
-  //                      model.at(twStartsArray, service, tw_index),
-  //                      model.at(twAbsoluteEndsArray, service, nbTwsArray[service] -
-  //                      1));
-  //   });
 
-  //   LSExpression earliestAvailableTime =
-  //       model.iif(nbTwsArray[service] == 0, 0,
-  //                 model.min(model.range(0, nbTwsArray[service]), timeSelector));
-
-  //   return model.max(time, earliestAvailableTime);
-  // }
+  // Time Leaving The Warehouse
+  vector<LSExpression> timeLeavingTheWarehouse;
 
   LSExpression twEndSelect(const LSExpression& service, const LSExpression& time) {
     LSExpression timeWindowSelector =
@@ -126,12 +126,11 @@ public:
     LSExpression timeWindowSelector =
         model.createLambdaFunction([&](LSExpression tw_index) {
           LSExpression twDecisionAbsoluteEnd = model.iif(
-              waitNextTWArray[service], model.at(twAbsoluteEndsArray, service, tw_index),
-              model.at(twEndsArray, service, tw_index));
-          return model.iif(twDecisionAbsoluteEnd >= time,
-                           model.at(twStartsArray, service, tw_index),
-                           model.min(time, model.at(twAbsoluteEndsArray, service,
-                                                    nbTwsArray[service] - 1)));
+              waitNextTWArray[service] == 1, model.at(twEndsArray, service, tw_index),
+              model.at(twAbsoluteEndsArray, service, tw_index));
+          return model.iif(
+              twDecisionAbsoluteEnd >= time, model.at(twStartsArray, service, tw_index),
+              model.at(twAbsoluteEndsArray, service, nbTwsArray[service] - 1));
         });
     LSExpression earliestAvailableTime =
         model.iif(nbTwsArray[service] == 0, 0,
@@ -231,8 +230,12 @@ public:
       vector<int> matrix_row;
       matrix_row.reserve(matrix_size);
       for (const auto& serviceTo : problem.services()) {
-        matrix_row.push_back(ceil(matrix.at(serviceFrom.matrix_index() * matrix_size +
-                                            serviceTo.matrix_index())));
+        if (matrix.size() > 0) {
+          matrix_row.push_back(ceil(matrix.at(serviceFrom.matrix_index() * matrix_size +
+                                              serviceTo.matrix_index())));
+        } else {
+          matrix_row.push_back(0);
+        }
       }
       Matrix.addOperands(model.array(matrix_row.begin(), matrix_row.end()));
     }
@@ -277,7 +280,6 @@ public:
     if (problem.routes_size() > 0) {
       LSExpression listExpr =
           localsolver.getModel().getExpression("sequence_" + problem.vehicles(0).id());
-      cout << "Test" << listExpr.getCollectionValue().toString() << endl;
       cout << endl;
     }
   }
@@ -291,9 +293,11 @@ public:
 
     for (int route_index = 0; route_index < problem.vehicles_size(); route_index++) {
       if (vehicleUsed[route_index].getValue()) {
-      LSCollection servicesCollection =
-          servicesSequence[route_index].getCollectionValue();
+        LSCollection servicesCollection =
+            servicesSequence[route_index].getCollectionValue();
+
         LSArray beginTimeArray = beginTime[route_index].getArrayValue();
+        LSArray arrivalTimeArray = arrivalTime[route_index].getArrayValue();
         LSArray endTimeArray = endTime[route_index].getArrayValue();
         LSArray latenessServicesOfVehicleArray =
             latenessOfServicesOfVehicle[route_index].getArrayValue();
@@ -305,37 +309,38 @@ public:
             timesFromWarehouses[problem.vehicles(route_index).matrix_index()]
                                [problem.vehicles(route_index).start_index()]
                                    .getArrayValue();
-      localsolver_result::Route* route = result->add_routes();
+        localsolver_result::Route* route = result->add_routes();
         if (problem.vehicles(route_index).start_index() != -1) {
           localsolver_result::Activity* start_route = route->add_activities();
           start_route->set_type("start");
           start_route->set_index(-1);
-          start_route->set_start_time(
-              beginTimeArray.getIntValue(0) -
-              timeFromWareHouseArray.getIntValue(servicesCollection[0]));
+          start_route->set_start_time(timeLeavingTheWarehouse[route_index].getIntValue());
         }
 
-      for (int activity_index = 0; activity_index < servicesCollection.count();
-           activity_index++) {
-        localsolver_result::Activity* activity = route->add_activities();
+        for (int activity_index = 0; activity_index < servicesCollection.count();
+             activity_index++) {
+          localsolver_result::Activity* activity = route->add_activities();
           activity->set_type("service");
-        activity->set_id(IndexId(servicesCollection[activity_index]));
+          activity->set_id(IndexId(servicesCollection[activity_index]));
           activity->set_index(
               problem.services(servicesCollection[activity_index]).problem_index());
-        activity->set_start_time(beginTimeArray.getIntValue(activity_index));
+          activity->set_start_time(beginTimeArray.getIntValue(activity_index));
           activity->set_lateness(
-              latenessServicesOfVehicleArray.getIntValue(activity_index));
+              latenessServicesOfVehicleArray.getDoubleValue(activity_index));
           int quantity_index = 0;
           for (auto const& quantity :
                problem.services(servicesCollection[activity_index]).quantities()) {
             activity->add_quantities(quantity);
             quantity_index++;
           }
-      }
-      auto route_costs = route->mutable_cost_details();
+        }
+        auto route_costs = route->mutable_cost_details();
+        // route_costs->set_time(routeDuration[route_index].getValue());
         route_costs->set_fixed(problem.vehicles(route_index).cost_fixed());
-        route_costs->set_lateness(latenessOfVehicle[route_index].getValue());
-        route_costs->set_time(routeDuration[route_index].getValue());
+        route_costs->set_distance(routeDistanceCost[route_index].getDoubleValue());
+        route_costs->set_time(routeDurationCost[route_index].getDoubleValue());
+        // route_costs->set_distance(routeDistance[route_index].getValue());
+        route_costs->set_lateness(latenessCost[route_index].getDoubleValue());
         if (problem.vehicles(route_index).end_index() != -1) {
           localsolver_result::Activity* end_route = route->add_activities();
           end_route->set_type("end");
@@ -357,6 +362,7 @@ public:
       , localsolver()
       , model(localsolver.getModel())
       , timeMatrices(0, model.array())
+      , distanceMatrices(0, model.array())
       , serviceQuantitiesMatrix(model.array())
       , vehicleCapacitiesMatrix(model.array())
       , twStartsArray(model.array())
@@ -364,6 +370,10 @@ public:
       , twAbsoluteEndsArray(model.array())
       , waitNextTWArray(model.array())
       , routeDuration(problem.vehicles_size())
+      , routeDurationCost(problem.vehicles_size())
+      , routeDistance(problem.vehicles_size())
+      , routeDistanceCost(problem.vehicles_size())
+      , routeFixedCost(problem.vehicles_size())
       , endTime(problem.vehicles_size())
       , beginTime(problem.vehicles_size())
       , arrivalTime(problem.vehicles_size())
@@ -371,10 +381,11 @@ public:
       , serviceStartsInTW(problem.vehicles_size())
       , latenessCost(problem.vehicles_size())
       , latenessOfServicesOfVehicle(problem.vehicles_size())
-      , excessLateness(problem.vehicles_size()) {
+      , excessLateness(problem.vehicles_size())
+      , timeLeavingTheWarehouse(problem.vehicles_size()) {
     for (const auto& matrix : problem.matrices()) {
       MatrixBuilder(timeMatrices, matrix.time());
-      cout << timeMatrices.rbegin()->toString() << endl;
+      MatrixBuilder(distanceMatrices, matrix.distance());
     }
 
     vector<int> vehicleStartIndiciesVec;
@@ -389,6 +400,7 @@ public:
       int time_matrix_size = sqrt(problem.matrices(vehicle.matrix_index()).time_size());
       int distance_matrix_size =
           sqrt(problem.matrices(vehicle.matrix_index()).distance_size());
+      map<int, LSExpression>& vehicleStartMapTime =
           timesFromWarehouses[vehicle.matrix_index()];
       map<int, LSExpression>& vehicleStartMapDistance =
           distanceFromWarehouses[vehicle.matrix_index()];
@@ -397,13 +409,13 @@ public:
         timesFromWarehouse.reserve(problem.services_size());
         if (vehicle.start_index() > -1) {
           if (problem.matrices(vehicle.matrix_index()).time().size() > 0) {
-          for (const auto& service : problem.services()) {
-            timesFromWarehouse.push_back(
-                problem.matrices(vehicle.matrix_index())
-                    .time(vehicle.start_index() * time_matrix_size +
-                          service.matrix_index()));
-          }
-        } else {
+            for (const auto& service : problem.services()) {
+              timesFromWarehouse.push_back(
+                  problem.matrices(vehicle.matrix_index())
+                      .time(vehicle.start_index() * time_matrix_size +
+                            service.matrix_index()));
+            }
+          } else {
             for (const auto& service : problem.services()) {
               timesFromWarehouse.push_back(0);
             }
@@ -412,7 +424,7 @@ public:
           timesFromWarehouse.resize(problem.services_size());
           fill_n(timesFromWarehouse.begin(), problem.services_size(), 0);
         }
-        vehicleStartMap[vehicle.start_index()] =
+        vehicleStartMapTime[vehicle.start_index()] =
             model.array(timesFromWarehouse.begin(), timesFromWarehouse.end());
       }
       if (vehicleStartMapDistance.find(vehicle.start_index()) ==
@@ -445,13 +457,14 @@ public:
         vector<int> timesToWarehouse;
         timesToWarehouse.reserve(problem.services_size());
         if (vehicle.end_index() > -1) {
-          for (const auto& service : problem.services()) {
-            timesToWarehouse.push_back(
-                problem.matrices(vehicle.matrix_index())
-                    .time(service.matrix_index() * time_matrix_size +
-                          vehicle.end_index()));
-          }
-        } else {
+          if (problem.matrices(vehicle.matrix_index()).time().size() > 0) {
+            for (const auto& service : problem.services()) {
+              timesToWarehouse.push_back(
+                  problem.matrices(vehicle.matrix_index())
+                      .time(service.matrix_index() * time_matrix_size +
+                            vehicle.end_index()));
+            }
+          } else {
             for (const auto& service : problem.services()) {
               timesToWarehouse.push_back(0);
             }
@@ -460,7 +473,7 @@ public:
           timesToWarehouse.resize(problem.services_size());
           fill_n(timesToWarehouse.begin(), problem.services_size(), 0);
         }
-        vehicleEndMap[vehicle.end_index()] =
+        vehicleEndMapTime[vehicle.end_index()] =
             model.array(timesToWarehouse.begin(), timesToWarehouse.end());
       }
       map<int, LSExpression>& vehicleEndMapTimeDistance =
@@ -517,24 +530,24 @@ public:
           vehicleCapacitiesMatrixVec[k].begin(), vehicleCapacitiesMatrixVec[k].end()));
       k++;
     }
-
     vehicleStartIndicies =
         model.array(vehicleStartIndiciesVec.begin(), vehicleStartIndiciesVec.end());
     vehicleEndIndicies =
         model.array(vehicleEndIndiciesVec.begin(), vehicleEndIndiciesVec.end());
 
     vector<int> serviceTimeVec;
-    vector<int> serviceLateMultiplierVec;
+    vector<float> serviceLateMultiplierVec;
     vector<int> serviceSetUpDurationVec;
     vector<vector<float>> serviceQuantitiesVec;
     vector<float> serviceExclusionCostVec;
+    vector<int> servicePriorityVec;
     vector<int> serviceMatrixIndexVec;
     vector<int> nbTWsVec;
 
     int s = 0;
     for (const auto& service : problem.services()) {
       serviceMatrixIndexVec.push_back(service.matrix_index());
-      waitNextTWArray.addOperand(model.boolVar());
+      waitNextTWArray.addOperand(model.intVar(0, 0));
       serviceTimeVec.push_back(service.duration());
       serviceLateMultiplierVec.push_back(service.late_multiplier());
       serviceSetUpDurationVec.push_back(service.setup_duration());
@@ -548,7 +561,12 @@ public:
       if (service.exclusion_cost() > 0) {
         serviceExclusionCostVec.push_back(service.exclusion_cost());
       } else {
-        serviceExclusionCostVec.push_back(100);
+        serviceExclusionCostVec.push_back(1e6);
+      }
+      if (service.priority() != 4) {
+        servicePriorityVec.push_back(service.priority());
+      } else {
+        servicePriorityVec.push_back(4);
       }
       vector<int> serviceTWStarts;
       vector<int> serviceTWEnds;
@@ -595,6 +613,7 @@ public:
         model.array(serviceSetUpDurationVec.begin(), serviceSetUpDurationVec.end());
     serviceExclusionCost =
         model.array(serviceExclusionCostVec.begin(), serviceExclusionCostVec.end());
+    servicePriority = model.array(servicePriorityVec.begin(), servicePriorityVec.end());
     nbTwsArray = model.array(nbTWsVec.begin(), nbTWsVec.end());
   }
 
@@ -622,15 +641,6 @@ public:
     LSExpression nbVehiclesUsed;
     vehiclesUsed.resize(problem.vehicles_size() + 1);
 
-    vector<LSExpression> routeDuration(problem.vehicles_size());
-    vector<LSExpression> endTime(problem.vehicles_size());
-    vector<LSExpression> beginTime(problem.vehicles_size());
-    vector<LSExpression> waitingTime(problem.vehicles_size());
-    vector<LSExpression> serviceStartsInTW(problem.vehicles_size());
-    vector<LSExpression> latenessCost(problem.vehicles_size());
-    vector<LSExpression> latenessOfServicesOfVehicle(problem.vehicles_size());
-    vector<LSExpression> excessLateness(problem.vehicles_size());
-
     // all services must be satisfied by the vehicles
     LSExpression partition =
         model.partition(serviceSequences.begin(), serviceSequences.end());
@@ -639,6 +649,8 @@ public:
     LSExpression unassignedServices = serviceSequences[problem.vehicles_size()];
     LSExpression numberOfUnassignedServices = model.count(unassignedServices);
     vehiclesUsed[problem.vehicles_size()] = numberOfUnassignedServices > 0;
+
+    vector<LSExpression> timeLeavingTheWarehouseConstraint(problem.vehicles_size());
 
     // Constraints for each vehicle
     int k = 0;
@@ -649,6 +661,24 @@ public:
 
       vehiclesUsed[k] = c > 0;
       vehiclesUsed[k].setName("vehicleUsed_" + to_string(k));
+
+      routeFixedCost[k] = model.iif(
+          vehiclesUsed[k], static_cast<lsint>(problem.vehicles(k).cost_fixed()), 0);
+
+      lsint twStart = vehicle.has_time_window()
+                          ? static_cast<lsint>(vehicle.time_window().start())
+                          : 0;
+
+      if (problem.vehicles(k).shift_preference() == "force_start") {
+        timeLeavingTheWarehouse[k] = model.intVar(twStart, twStart);
+      } else {
+        cout << "fixme !!!!!" << endl;
+        timeLeavingTheWarehouse[k] = model.intVar(twStart, 30000); // TODO : max TWstarts.
+      }
+
+      timeLeavingTheWarehouseConstraint[k] =
+          model.eq(timeLeavingTheWarehouse[k], twStart);
+      model.constraint(timeLeavingTheWarehouseConstraint[k]);
 
       LSExpression distSelector = model.createLambdaFunction([&](LSExpression i) {
         return model.at(distanceMatrices[vehicle.matrix_index()], sequenceVehicle[i - 1],
@@ -662,17 +692,17 @@ public:
                         distanceToWarehouses[vehicle.matrix_index()][vehicle.end_index()]
                                             [sequenceVehicle[c - 1]],
                     0);
-
+      routeDistanceCost[k] =
+          routeDistance[k] * problem.vehicles(k).cost_distance_multiplier();
       // End of each visit
+
       LSExpression endSelector =
           model.createLambdaFunction([&](LSExpression i, LSExpression prev) {
             return nextStart(
                        sequenceVehicle[i],
                        model.iif(
                            i == 0,
-                           ((vehicle.has_time_window())
-                                ? static_cast<lsint>(vehicle.time_window().start())
-                                : 0) +
+                           timeLeavingTheWarehouse[k] +
                                timesFromWarehouses[vehicle.matrix_index()]
                                                   [vehicle.start_index()]
                                                   [sequenceVehicle[i]] +
@@ -690,59 +720,81 @@ public:
 
       LSExpression beginTimeSelector = model.createLambdaFunction([&](LSExpression i) {
         return endTime[k][i] - serviceTime[sequenceVehicle[i]];
-        // to include setup duration of the first service in the begin time calculation
-        // use the following one:
-        // return endTime[k][i] - serviceTime[sequenceVehicle[i]] -
-        //        model.iif(i > 0 && serviceMatrixIndex[sequenceVehicle[i]] ==
-        //                               serviceMatrixIndex[sequenceVehicle[i - 1]],
-        //                  0, serviceSetUpDuration[sequenceVehicle[i]]);
       });
-
       beginTime[k] = model.array(model.range(0, c), beginTimeSelector);
+      beginTime[k].setName("beginTime_" + problem.vehicles(k).id());
+
+      LSExpression arrivalTimeSelector = model.createLambdaFunction([&](LSExpression i) {
+        return beginTime[k][i] -
+               model.iif(i < 1, serviceSetUpDuration[sequenceVehicle[i]],
+                         model.iif(serviceMatrixIndex[sequenceVehicle[i]] ==
+                                       serviceMatrixIndex[sequenceVehicle[i - 1]],
+                                   0, serviceSetUpDuration[sequenceVehicle[i]]));
+      });
+      arrivalTime[k] = model.array(model.range(0, c), arrivalTimeSelector);
+      arrivalTime[k].setName("arrivalTime" + problem.vehicles(k).id());
 
       LSExpression waitingTimeSelector = model.createLambdaFunction([&](LSExpression i) {
         return model.iif(
             i == 0,
-            beginTime[k][i] -
+            arrivalTime[k][i] -
                 timesFromWarehouses[vehicle.matrix_index()][vehicle.start_index()]
-                                   [sequenceVehicle[i]],
-            model.max(0, beginTime[k][i] - endTime[k][i - 1] -
+                                   [sequenceVehicle[i]] -
+                timeLeavingTheWarehouse[k],
+            model.max(0, arrivalTime[k][i] - endTime[k][i - 1] -
                              model.at(timeMatrices[vehicle.matrix_index()],
                                       sequenceVehicle[i - 1], sequenceVehicle[i])));
       });
       waitingTime[k] = model.sum(model.range(0, c), waitingTimeSelector);
 
+      // fixme if costtimemultiplier == 0 => nothing to do
       routeDuration[k] =
           model.iif(c > 0,
                     endTime[k][c - 1] +
                         timesToWarehouses[vehicle.matrix_index()][vehicle.end_index()]
-                                         [sequenceVehicle[c - 1]],
+                                         [sequenceVehicle[c - 1]] -
+                        timeLeavingTheWarehouse[k],
                     0);
+      routeDurationCost[k] =
+          routeDuration[k] * problem.vehicles(k).cost_time_multiplier();
 
+      timesToWarehouses[vehicle.matrix_index()][vehicle.end_index()].setName(
+          "timesToWarehouses of vehicle" + to_string(k));
+      timesFromWarehouses[vehicle.matrix_index()][vehicle.start_index()].setName(
+          "timesFromWarehouses of vehicle" + to_string(k));
       if (vehicle.duration() > 0 &&
           (!vehicle.has_time_window() ||
            vehicle.time_window().end() - vehicle.time_window().start() >
                vehicle.duration())) {
         LSExpression duration_constraint =
-            (routeDuration[k] - static_cast<lsint>(vehicle.time_window().start())) <=
-            static_cast<lsint>(vehicle.duration());
+            routeDuration[k] <= static_cast<lsint>(vehicle.duration());
         duration_constraint.setName("duration_constraint_" + to_string(k));
         model.constraint(duration_constraint);
       }
 
       if (vehicle.has_time_window() && vehicle.time_window().end() < CUSTOM_MAX_INT) {
         if (vehicle.cost_late_multiplier() > 0) {
-          model.constraint(
+          LSExpression twEndsVehicleConstraintWithCostLateMultiplier =
               routeDuration[k] <=
-                           static_cast<lsint>(vehicle.time_window().end() +
+              static_cast<lsint>(vehicle.time_window().end() +
                                  vehicle.time_window().maximum_lateness()) +
                   timesToWarehouses[vehicle.matrix_index()][vehicle.end_index()]
-                                   [sequenceVehicle[c - 1]]);
+                                   [sequenceVehicle[c - 1]];
+          twEndsVehicleConstraintWithCostLateMultiplier.setName(
+              "vehicle " + to_string(k) +
+              "ending time window constraints with cost late multiplier");
+          model.constraint(twEndsVehicleConstraintWithCostLateMultiplier);
         } else {
-          model.constraint(routeDuration[k] <=
-                           timesToWarehouses[vehicle.matrix_index()][vehicle.end_index()]
-                                            [sequenceVehicle[c - 1]] +
-                           static_cast<lsint>(vehicle.time_window().end()));
+          LSExpression twEndsVehicleConstraint =
+              model.iif(c > 0,
+                        timesToWarehouses[vehicle.matrix_index()][vehicle.end_index()]
+                                         [sequenceVehicle[c - 1]] +
+                                endTime[k][c - 1] <=
+                            static_cast<lsint>(vehicle.time_window().end()),
+                        true);
+          model.constraint(twEndsVehicleConstraint);
+          twEndsVehicleConstraint.setName("vehicle " + to_string(k) +
+                                          " ending time window constraints");
         }
       }
       LSExpression excessLatenessSelector =
@@ -757,16 +809,15 @@ public:
 
       LSExpression latenessSelector = model.createLambdaFunction([&](LSExpression i) {
         return serviceLateMultiplier[sequenceVehicle[i]] *
-               model.max(
-                   0, endTime[k][i] - serviceTime[sequenceVehicle[i]] -
-                          twEndSelect(sequenceVehicle[i],
-                                      endTime[k][i] - serviceTime[sequenceVehicle[i]]));
+               model.max(0, beginTime[k][i] -
+                                twEndSelect(sequenceVehicle[i], beginTime[k][i]));
       });
 
       // latenessTW = model.range(0, nbTwsArray[sequenceVehicle[i]]);
       latenessOfServicesOfVehicle[k] = model.array(model.range(0, c), latenessSelector);
 
-      latenessCost[k] = model.sum(model.range(0, c), latenessSelector);
+      latenessCost[k] =
+          model.iif(c > 0, model.sum(model.range(0, c), latenessSelector), 0);
 
       capacityConstraintsOfVehicle(k, sequenceVehicle, c);
 
@@ -790,7 +841,8 @@ public:
         model.sum(excessLateness.begin(), excessLateness.end());
     // model.constraint(totalExcessLateness == 0);
 
-    LSExpression totalLatenessCost = model.sum(latenessCost.begin(), latenessCost.end());
+    LSExpression totalLatenessCost =
+        model.max(0, model.sum(latenessCost.begin(), latenessCost.end()));
     totalLatenessCost.setName("total Lateness Cost");
 
     LSExpression totalWaitingTime = model.sum(waitingTime.begin(), waitingTime.end());
@@ -802,23 +854,44 @@ public:
         model.sum(model.range(0, numberOfUnassignedServices), exclusionCostCumulator);
     totalExclusionCost.setName("total Exclusion Cost");
 
+    // Total waitingTimebeforeLeavingWarehouse
+    LSExpression totalWaitingTimeBeforeStart;
+    totalWaitingTimeBeforeStart =
+        model.sum(timeLeavingTheWarehouse.begin(), timeLeavingTheWarehouse.end());
+
     // Total vehicles used :
     nbVehiclesUsed = model.sum(vehiclesUsed.begin(), vehiclesUsed.end());
 
-    // Total distance traveled :
+    // Total duration traveled :
     LSExpression totalDuration;
     totalDuration = model.sum(routeDuration.begin(), routeDuration.end());
     totalDuration.setName("totalDuration");
+
+    // Total duration cost :
+    LSExpression totalDurationCost;
+    totalDurationCost = model.sum(routeDurationCost.begin(), routeDurationCost.end());
+    totalDurationCost.setName("totalDurationCost");
 
     // Total distance traveled :
     LSExpression totalDistance;
     totalDistance = model.sum(routeDistance.begin(), routeDistance.end());
     totalDistance.setName("totalDistance");
+
+    // Total distance cost :
+    LSExpression totalDistanceCost;
+    totalDistanceCost = model.sum(routeDistanceCost.begin(), routeDistanceCost.end());
+    totalDistanceCost.setName("totalDistanceCost");
+
+    // Total Fixed Costs
+    LSExpression totalFixedCost;
+    totalFixedCost = model.sum(routeFixedCost.begin(), routeFixedCost.end());
+    totalFixedCost.setName("totalFixedCost");
+
     // model.minimize(nbVehiclesUsed);
     model.minimize(totalExcessLateness);
     model.minimize(totalExclusionCost);
-    model.minimize(totalDuration);
-    model.minimize(totalLatenessCost + totalWaitingTime);
+    model.minimize(totalDurationCost + totalDistanceCost + totalLatenessCost +
+                   totalFixedCost);
 
     model.close();
 
@@ -827,7 +900,7 @@ public:
     cout << model.toString() << endl;
     localsolver.getParam().setTimeLimit(FLAGS_time_limit_in_ms / 1000);
     if (FLAGS_only_first_solution) {
-      localsolver.getParam().setIterationLimit(1);
+      localsolver.getParam().setIterationLimit(30);
     }
 
     // With ls a LocalSolver object
@@ -837,23 +910,45 @@ public:
     localsolver.solve();
     LSStatistics stats = localsolver.getStatistics();
     long nbOfIterations = stats.getNbIterations();
+    // stats.
 
-    if (problem.vehicles_size() > 10) {
+    model.open();
+    for (auto constraint : timeLeavingTheWarehouseConstraint) {
+      model.removeConstraint(constraint);
+    }
+    model.close();
+    localsolver.solve();
+
+    ParseSolution(result, serviceSequences, totalDuration, vehiclesUsed,
+                  latenessOfServicesOfVehicle, nbOfIterations);
+
+    cout << " ----------------------Waiting times--------------------------  " << endl;
+    for (int v = 0; v < problem.vehicles_size(); v++) {
+      cout << "waiting time service of " << problem.vehicles(v).id() << " "
+           << waitingTime[v].getValue() << endl;
+      cout << "waiting time before start" << problem.vehicles(v).id() << " "
+           << timeLeavingTheWarehouse[v].getValue() << endl;
+    }
+    if (problem.services_size() < 10) {
+      for (int s = 0; s < problem.services_size(); s++) {
+        cout << " late multiplier of service " + s
+             << serviceLateMultiplier.getArrayValue().toString() << endl;
+      }
       cout << model.toString() << endl;
-    cout << "-------------------- DATA ------------------------------" << endl;
-    for (auto vehicle : problem.vehicles()) {
-      cout << "timeMatrix of : " << vehicle.id() << " "
-           << timeMatrices[vehicle.matrix_index()].getArrayValue().toString() << endl;
-      cout << "timeFromWarehouses of : " << vehicle.id() << " "
-           << timesFromWarehouses[vehicle.matrix_index()][vehicle.start_index()]
-                  .getArrayValue()
-                  .toString()
-           << endl;
-      cout << "timeToWarehouses of : " << vehicle.id() << " "
-           << timesToWarehouses[vehicle.matrix_index()][vehicle.end_index()]
-                  .getArrayValue()
-                  .toString()
-           << endl;
+      cout << "-------------------- DATA ------------------------------" << endl;
+      for (auto vehicle : problem.vehicles()) {
+        cout << "timeMatrix of : " << vehicle.id() << " "
+             << timeMatrices[vehicle.matrix_index()].getArrayValue().toString() << endl;
+        cout << "timeFromWarehouses of : " << vehicle.id() << " "
+             << timesFromWarehouses[vehicle.matrix_index()][vehicle.start_index()]
+                    .getArrayValue()
+                    .toString()
+             << endl;
+        cout << "timeToWarehouses of : " << vehicle.id() << " "
+             << timesToWarehouses[vehicle.matrix_index()][vehicle.end_index()]
+                    .getArrayValue()
+                    .toString()
+             << endl;
         cout << "distanceFromWarehouses of : " << vehicle.id() << " "
              << distanceFromWarehouses[vehicle.matrix_index()][vehicle.start_index()]
                     .getArrayValue()
@@ -867,9 +962,9 @@ public:
 
         cout << " Vehicle Time Window Start :  " << vehicle.time_window().start() << endl;
         cout << " Vehicle Time Window Ends  :  " << vehicle.time_window().end() << endl;
-    }
+      }
 
-    cout << "number of time windows " << nbTwsArray.getArrayValue().toString() << endl;
+      cout << "number of time windows " << nbTwsArray.getArrayValue().toString() << endl;
 
       cout << " Services Time Window Starts Array :  "
            << twStartsArray.getArrayValue().toString() << endl;
@@ -877,91 +972,104 @@ public:
       cout << " Services Time Window Ends Array :  "
            << twEndsArray.getArrayValue().toString() << endl;
       cout << " Services Time Window Absolute End Array :  "
-         << twAbsoluteEndsArray.getArrayValue().toString() << endl;
+           << twAbsoluteEndsArray.getArrayValue().toString() << endl;
 
-    cout << endl;
-    cout << "total duration = " << totalDuration.getValue() << endl;
+      cout << endl;
+      cout << "total duration = " << totalDuration.getValue() << endl;
 
-    cout << "-----------------------------------------------------------------" << endl;
+      cout << "-----------------------------------------------------------------" << endl;
 
-    cout << "vehicle capacities matrix"
-         << vehicleCapacitiesMatrix.getArrayValue().toString() << endl;
+      cout << "vehicle capacities matrix"
+           << vehicleCapacitiesMatrix.getArrayValue().toString() << endl;
 
-    cout << "service Quantities Matrix "
-         << serviceQuantitiesMatrix.getArrayValue().toString() << endl;
-    cout << " ====================== SOLUTION ==================================="
-         << endl;
-    cout << "--------------------   ASSIGNEMENTS  ----------------------------" << endl;
+      cout << "service Quantities Matrix "
+           << serviceQuantitiesMatrix.getArrayValue().toString() << endl;
+      cout << " ====================== SOLUTION ==================================="
+           << endl;
+      cout << "--------------------   ASSIGNEMENTS  ----------------------------" << endl;
 
-    if (vehiclesUsed[problem.vehicles_size()].getValue() == 0) {
-      cout << "No unassigned service" << endl;
-    } else {
-      cout << "unassigned service(s) : ";
-      LSCollection servicesCollection =
-          serviceSequences[problem.vehicles_size()].getCollectionValue();
-      for (lsint i = 0; i < servicesCollection.count(); i++) {
-        cout << IndexId(servicesCollection[i]) << " ";
+      if (vehiclesUsed[problem.vehicles_size()].getValue() == 0) {
+        cout << "No unassigned service" << endl;
+      } else {
+        cout << "unassigned service(s) : ";
+        LSCollection servicesCollection =
+            serviceSequences[problem.vehicles_size()].getCollectionValue();
+        for (lsint i = 0; i < servicesCollection.count(); i++) {
+          cout << IndexId(servicesCollection[i]) << " ";
+        }
+        cout << endl;
+      }
+
+      for (int v = 0; v < problem.vehicles_size(); v++) {
+        if (vehiclesUsed[v].getValue() != 1)
+          continue;
+        cout << "assigned service(s) to " << problem.vehicles(v).id() << " : ";
+        LSCollection servicesCollection = serviceSequences[v].getCollectionValue();
+        for (lsint i = 0; i < servicesCollection.count(); i++) {
+          cout << IndexId(servicesCollection[i]) << " ";
+        }
+        cout << endl;
+      }
+      cout << " ----------------------Number of Vehicles Used "
+              "--------------------------  "
+           << endl;
+      cout << "nbVehicle Used : " << nbVehiclesUsed.getValue() << endl;
+
+      cout << " ----------------------Begin times--------------------------  " << endl;
+      for (int v = 0; v < problem.vehicles_size(); v++) {
+        cout << "begin times service of " << problem.vehicles(v).id() << " "
+             << beginTime[v].getArrayValue().toString() << endl;
+      }
+
+      cout << " ----------------------Arrival times--------------------------  " << endl;
+      for (int v = 0; v < problem.vehicles_size(); v++) {
+        cout << "Arrival times service of " << problem.vehicles(v).id() << " "
+             << arrivalTime[v].getArrayValue().toString() << endl;
+      }
+
+      cout << " ----------------------End times--------------------------  " << endl;
+      for (int v = 0; v < problem.vehicles_size(); v++) {
+        cout << "end times service of " << problem.vehicles(v).id() << " "
+             << endTime[v].getArrayValue().toString() << endl;
+        // for (int endTimeIndex = 0; endTimeIndex <
+        // model.count(endTime[v]).getIntValue();
+        //      endTimeIndex++) {
+        //   cout << model.at(endTime, v, endTimeIndex).getIntValue() << endl;
+        // }
+        cout << "total route duration :  " << problem.vehicles(v).id() << " "
+             << routeDuration[v].getValue() << endl;
+      }
+      cout << " ----------------------Waiting times--------------------------  " << endl;
+      for (int v = 0; v < problem.vehicles_size(); v++) {
+        cout << "waiting time service of " << problem.vehicles(v).id() << " "
+             << waitingTime[v].getValue() << endl;
+        cout << "waiting time before start" << problem.vehicles(v).id() << " "
+             << timeLeavingTheWarehouse[v].getValue() << endl;
       }
       cout << endl;
-    }
-
-    for (int v = 0; v < problem.vehicles_size(); v++) {
-      if (vehiclesUsed[v].getValue() != 1)
-        continue;
-      cout << "assigned service(s) to " << problem.vehicles(v).id() << " : ";
-      LSCollection servicesCollection = serviceSequences[v].getCollectionValue();
-      for (lsint i = 0; i < servicesCollection.count(); i++) {
-        cout << IndexId(servicesCollection[i]) << " ";
-      }
-      cout << endl;
-    }
-      cout
-          << " ----------------------Number of Vehicles Used --------------------------  "
-         << endl;
-    cout << "nbVehicle Used : " << nbVehiclesUsed.getValue() << endl;
-
-    cout << " ----------------------Begin times--------------------------  " << endl;
-    for (int v = 0; v < problem.vehicles_size(); v++) {
-      cout << "begin times service of " << problem.vehicles(v).id() << " "
-           << beginTime[v].getArrayValue().toString() << endl;
-    }
-
-    cout << " ----------------------End times--------------------------  " << endl;
-    for (int v = 0; v < problem.vehicles_size(); v++) {
-      cout << "end times service of " << problem.vehicles(v).id() << " "
-           << endTime[v].getArrayValue().toString() << endl;
-      // for (int endTimeIndex = 0; endTimeIndex <
-      // model.count(endTime[v]).getIntValue();
-      //      endTimeIndex++) {
-      //   cout << model.at(endTime, v, endTimeIndex).getIntValue() << endl;
-      // }
-      cout << "total route duration :  " << problem.vehicles(v).id() << " "
-           << routeDuration[v].getValue() << endl;
-    }
-    cout << " ----------------------Waiting times--------------------------  " << endl;
-    for (int v = 0; v < problem.vehicles_size(); v++) {
-      cout << "waiting time service of " << problem.vehicles(v).id() << " "
-           << waitingTime[v].getValue() << endl;
-    }
-    cout << endl;
       cout << " -------------------- LATENESS -----------------------------------"
            << endl;
+      for (int v = 0; v < problem.vehicles_size(); v++) {
+        cout << "lateness " << problem.vehicles(v).id() << " "
+             << latenessOfServicesOfVehicle[v].getArrayValue().toString() << endl;
+      }
 
-    cout << " total Absolute Latenness " << totalExcessLateness.getValue() << endl;
-    cout << " total Latenness " << totalLatenessCost.getValue() << endl;
-    cout << endl;
-    for (int v_index = 0; v_index < problem.vehicles_size(); v_index++) {
+      cout << " total Absolute Latenness " << totalExcessLateness.getValue() << endl;
+      cout << " total Latenness " << totalLatenessCost.getDoubleValue() << endl;
+      cout << endl;
+      for (int v_index = 0; v_index < problem.vehicles_size(); v_index++) {
         cout << latenessOfServicesOfVehicle[v_index].getArrayValue().toString() << endl;
-    }
+      }
 
       cout << " -------------------- OBJECTIVE -----------------------------------"
            << endl;
-    for (int i = 0; i < model.getNbObjectives(); i++) {
-      cout << model.getObjective(i).toString() << endl;
-    }
-    cout << endl;
-    cout << " ----------------------- END -------------------------------------------"
-         << endl;
+      for (int i = 0; i < model.getNbObjectives(); i++) {
+        cout << model.getObjective(i).toString() << endl;
+      }
+      cout << endl;
+      cout << " ----------------------- END "
+              "-------------------------------------------"
+           << endl;
     }
   }
 };
@@ -1014,7 +1122,8 @@ void readData(localsolver_vrp::Problem& problem) {
                                   "rests are not implemented yet");
     }
     if ((!vehicle.shift_preference().empty()) &&
-        (vehicle.shift_preference() != "minimize_span")) {
+        (vehicle.shift_preference() != "minimize_span" &&
+         vehicle.shift_preference() != "force_start")) {
       throw std::invalid_argument(" ERROR ======================= "
                                   "shift_preference is not implemented yet");
     }
@@ -1044,11 +1153,8 @@ void readData(localsolver_vrp::Problem& problem) {
   }
 
   for (const auto& service : problem.services()) {
-    cout << " refill quantity size : " << service.refill_quantities_size() << endl;
     for (int quantity_index = 0; quantity_index < service.refill_quantities_size();
          quantity_index++) {
-      cout << " service refoil quantity " << service.refill_quantities(quantity_index)
-           << endl;
       if (service.refill_quantities(quantity_index)) {
         throw std::invalid_argument(" ERROR ======================= "
                                     " refill quantities are not implemented yet");
@@ -1068,21 +1174,30 @@ int main(int argc, char** argv) {
 
   localsolver_vrp::Problem problem;
   readData(problem);
+  if (problem.services_size() < 10) {
+    for (auto vehicle : problem.vehicles()) {
+      vehicle.PrintDebugString();
+    }
 
-  for (auto vehicle : problem.vehicles()) {
-    vehicle.PrintDebugString();
-  }
-
-  for (auto service : problem.services()) {
-    cout << "duration of service " << service.id() << " : " << service.duration() << endl;
-    cout << "exclusion cost :" << service.exclusion_cost() << endl;
+    for (auto service : problem.services()) {
+      cout << "duration of service " << service.id() << " : " << service.duration()
+           << endl;
+      cout << "exclusion cost :" << service.exclusion_cost() << endl;
+    }
   }
   localsolver_result::Result* result = new localsolver_result::Result;
   localsolver_VRP model(problem);
 
   model.createModelAndSolve(result);
   if (result != nullptr) {
-    result->PrintDebugString();
+    std::ofstream output(absl::GetFlag(FLAGS_solution_file),
+                         std::ios::trunc | std::ios::binary);
+    if (!result->SerializeToOstream(&output)) {
+      cout << "Failed to write result.";
+    }
+    output.close();
+  } else {
+    std::cout << "No solution found..." << std::endl;
   }
   delete result;
 
