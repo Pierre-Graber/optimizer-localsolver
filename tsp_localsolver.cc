@@ -910,7 +910,7 @@ public:
     localsolver.solve();
     LSStatistics stats = localsolver.getStatistics();
     long nbOfIterations = stats.getNbIterations();
-    // stats.
+    int runningTime = stats.getRunningTime();
 
     model.open();
     for (auto constraint : timeLeavingTheWarehouseConstraint) {
