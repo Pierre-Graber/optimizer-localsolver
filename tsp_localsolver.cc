@@ -81,7 +81,7 @@ public:
   LSExpression vehicleEndIndicies;
   LSExpression vehicleCapacitiesMatrix;
 
-  map<string, int64> ids_map_;
+  map<string, int64> service_ids_map_;
   vector<map<int, LSExpression>> timesFromWarehouses;
   vector<map<int, LSExpression>> timesToWarehouses;
 
@@ -108,6 +108,7 @@ public:
   vector<LSExpression> latenessOfServicesOfVehicle;
   vector<LSExpression> excessLateness;
   vector<int> allVehicleIndices;
+  map<string, int64> vehicle_ids_map_;
 
   // Time Leaving The Warehouse
   vector<LSExpression> timeLeavingTheWarehouse;
@@ -148,6 +149,7 @@ public:
 
     localsolver.solve();
   }
+
   LSExpression nextStart(const LSExpression& service, const LSExpression& time) {
     LSExpression timeWindowSelector =
         model.createLambdaFunction([&](LSExpression tw_index) {
@@ -170,29 +172,35 @@ public:
         for (int link_index = 0; link_index < relation.linked_ids_size() - 1;
              link_index++) {
           model.constraint(
+              model.contains(sequenceVehicle,
+                             static_cast<lsint>(IdIndex(relation.linked_ids(link_index),
+                                                        service_ids_map_))) ==
               model.contains(sequenceVehicle, static_cast<lsint>(IdIndex(
-                                                  relation.linked_ids(link_index)))) ==
-              model.contains(sequenceVehicle, static_cast<lsint>(IdIndex(
-                                                  relation.linked_ids(link_index + 1)))));
+                                                  relation.linked_ids(link_index + 1),
+                                                  service_ids_map_))));
           model.constraint(
-              model.indexOf(sequenceVehicle, static_cast<lsint>(IdIndex(
-                                                 relation.linked_ids(link_index)))) <=
-              model.indexOf(sequenceVehicle, static_cast<lsint>(IdIndex(
-                                                 relation.linked_ids(link_index + 1)))));
+              model.indexOf(sequenceVehicle,
+                            static_cast<lsint>(IdIndex(relation.linked_ids(link_index),
+                                                       service_ids_map_))) <=
+              model.indexOf(sequenceVehicle,
+                            static_cast<lsint>(IdIndex(
+                                relation.linked_ids(link_index + 1), service_ids_map_))));
         }
       }
       if (relation.type() == "order") {
         for (int link_index = 0; link_index < relation.linked_ids_size() - 1;
              link_index++) {
           LSExpression sequenceContainsCurrentService = model.contains(
-              sequenceVehicle,
-              static_cast<lsint>(IdIndex(relation.linked_ids(link_index))));
-          LSExpression sequenceContainsNextService = model.contains(
-              sequenceVehicle,
-              static_cast<lsint>(IdIndex(relation.linked_ids(link_index + 1))));
-          LSExpression nextIsNotAssigned = model.contains(
-              unassignedServices,
-              static_cast<lsint>(IdIndex(relation.linked_ids(link_index + 1))));
+              sequenceVehicle, static_cast<lsint>(IdIndex(relation.linked_ids(link_index),
+                                                          service_ids_map_)));
+          LSExpression sequenceContainsNextService =
+              model.contains(sequenceVehicle,
+                             static_cast<lsint>(IdIndex(
+                                 relation.linked_ids(link_index + 1), service_ids_map_)));
+          LSExpression nextIsNotAssigned =
+              model.contains(unassignedServices,
+                             static_cast<lsint>(IdIndex(
+                                 relation.linked_ids(link_index + 1), service_ids_map_)));
 
           model.constraint(model.iif(sequenceContainsCurrentService,
                                      sequenceContainsNextService || nextIsNotAssigned,
@@ -200,11 +208,12 @@ public:
           model.constraint(model.iif(
               sequenceContainsNextService,
 
+              model.indexOf(sequenceVehicle,
+                            static_cast<lsint>(IdIndex(relation.linked_ids(link_index),
+                                                       service_ids_map_))) <=
               model.indexOf(sequenceVehicle, static_cast<lsint>(IdIndex(
-                                                 relation.linked_ids(link_index)))) <=
-                  model.indexOf(
-                      sequenceVehicle,
-                      static_cast<lsint>(IdIndex(relation.linked_ids(link_index + 1)))),
+                                                     relation.linked_ids(link_index + 1),
+                                                     service_ids_map_))),
               true));
         }
       }
@@ -212,17 +221,19 @@ public:
         for (int link_index = 0; link_index < relation.linked_ids_size() - 1;
              link_index++) {
           LSExpression sequenceContainsCurrentService = model.contains(
-              sequenceVehicle,
-              static_cast<lsint>(IdIndex(relation.linked_ids(link_index))));
-          LSExpression sequenceContainsNextService = model.contains(
-              sequenceVehicle,
-              static_cast<lsint>(IdIndex(relation.linked_ids(link_index + 1))));
-          LSExpression currentServiceIndexInSequence =
+              sequenceVehicle, static_cast<lsint>(IdIndex(relation.linked_ids(link_index),
+                                                          service_ids_map_)));
+          LSExpression sequenceContainsNextService =
+              model.contains(sequenceVehicle,
+                             static_cast<lsint>(IdIndex(
+                                 relation.linked_ids(link_index + 1), service_ids_map_)));
+          LSExpression currentServiceIndexInSequence = model.indexOf(
+              sequenceVehicle, static_cast<lsint>(IdIndex(relation.linked_ids(link_index),
+                                                          service_ids_map_)));
+          LSExpression nextServiceIndexInSequence =
               model.indexOf(sequenceVehicle,
-                            static_cast<lsint>(IdIndex(relation.linked_ids(link_index))));
-          LSExpression nextServiceIndexInSequence = model.indexOf(
-              sequenceVehicle,
-              static_cast<lsint>(IdIndex(relation.linked_ids(link_index + 1))));
+                            static_cast<lsint>(IdIndex(
+                                relation.linked_ids(link_index + 1), service_ids_map_)));
 
           model.constraint(sequenceContainsCurrentService == sequenceContainsNextService);
           model.constraint(model.iif(
@@ -268,16 +279,16 @@ public:
     Matrices.push_back(Matrix);
   }
 
-  int64 IdIndex(const string& id) const {
-    map<string, int64>::const_iterator it = ids_map_.find(id);
-    if (it != ids_map_.end())
+  int64 IdIndex(const string& id, map<string, int64> map_) const {
+    map<string, int64>::const_iterator it = map_.find(id);
+    if (it != map_.end())
       return it->second;
     else
       return -1;
   }
 
-  string IndexId(const int index) const {
-    for (auto it = ids_map_.begin(); it != ids_map_.end(); ++it) {
+  string IndexId(const int index, map<string, int64> map_) const {
+    for (auto it = map_.begin(); it != map_.end(); ++it) {
       if (it->second == index) {
         return it->first;
       }
@@ -292,7 +303,7 @@ public:
           localsolver.getModel().getExpression("sequence_" + route.vehicle_id());
       LSCollection sequence = listExpr.getCollectionValue();
       for (const auto& service_id : route.service_ids()) {
-        sequence.add(IdIndex(service_id));
+        sequence.add(IdIndex(service_id, service_ids_map_));
         initializedServiceIds.insert(service_id);
       }
     }
@@ -301,7 +312,7 @@ public:
 
     for (const auto& service : problem.services()) {
       if (initializedServiceIds.count(service.id()) == 0)
-        sequenceUnassigned.add(IdIndex(service.id()));
+        sequenceUnassigned.add(IdIndex(service.id(), service_ids_map_));
     }
     if (problem.routes_size() > 0) {
       LSExpression listExpr =
@@ -350,7 +361,7 @@ public:
              activity_index++) {
           localsolver_result::Activity* activity = route->add_activities();
           activity->set_type("service");
-          activity->set_id(IndexId(servicesCollection[activity_index]));
+          activity->set_id(IndexId(servicesCollection[activity_index], service_ids_map_));
           activity->set_index(
               problem.services(servicesCollection[activity_index]).problem_index());
           activity->set_start_time(beginTimeArray.getIntValue(activity_index));
@@ -558,6 +569,8 @@ public:
       }
       vehicleCapacitiesMatrix.addOperand(model.array(
           vehicleCapacitiesMatrixVec[k].begin(), vehicleCapacitiesMatrixVec[k].end()));
+          
+      vehicle_ids_map_[(string)vehicle.id()] = k;
       k++;
     }
     vehicleStartIndicies =
@@ -634,7 +647,7 @@ public:
       } else {
         nbTWsVec.push_back(service.time_windows_size());
       }
-      ids_map_[(string)service.id()] = s;
+      service_ids_map_[(string)service.id()] = s;
       s++;
     }
     serviceMatrixIndex =
@@ -865,7 +878,10 @@ public:
                      service.vehicle_indices().begin(), service.vehicle_indices().end(),
                      back_inserter(incompatibleVehicleIndices));
       for (int64 incompatible_vehicle : incompatibleVehicleIndices) {
-        model.constraint(!model.contains(serviceSequences[incompatible_vehicle], s));
+        model.constraint(!model.contains(
+            serviceSequences[IdIndex(problem.vehicles(incompatible_vehicle).id(),
+                                     vehicle_ids_map_)],
+            s));
       }
       s++;
     }
@@ -1008,7 +1024,7 @@ public:
         LSCollection servicesCollection =
             serviceSequences[problem.vehicles_size()].getCollectionValue();
         for (lsint i = 0; i < servicesCollection.count(); i++) {
-          cout << IndexId(servicesCollection[i]) << " ";
+          cout << IndexId(servicesCollection[i], service_ids_map_) << " ";
         }
         cout << endl;
       }
@@ -1019,7 +1035,7 @@ public:
         cout << "assigned service(s) to " << problem.vehicles(v).id() << " : ";
         LSCollection servicesCollection = serviceSequences[v].getCollectionValue();
         for (lsint i = 0; i < servicesCollection.count(); i++) {
-          cout << IndexId(servicesCollection[i]) << " ";
+          cout << IndexId(servicesCollection[i], service_ids_map_) << " ";
         }
         cout << endl;
       }
