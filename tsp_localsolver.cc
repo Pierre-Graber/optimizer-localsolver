@@ -750,14 +750,14 @@ public:
       });
       waitingTime[k] = model.sum(model.range(0, c), waitingTimeSelector);
 
-      // fixme if costtimemultiplier == 0 => nothing to do
-      routeDuration[k] =
+      routeDuration[k] = model.iif(
+          problem.vehicles(k).cost_time_multiplier() == 0, 0,
           model.iif(c > 0,
                     endTime[k][c - 1] +
                         timesToWarehouses[vehicle.matrix_index()][vehicle.end_index()]
                                          [sequenceVehicle[c - 1]] -
                         timeLeavingTheWarehouse[k],
-                    0);
+                    0));
       routeDurationCost[k] =
           routeDuration[k] * problem.vehicles(k).cost_time_multiplier();
 
