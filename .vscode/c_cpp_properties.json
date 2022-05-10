@@ -6,7 +6,7 @@
                 "/usr/include",
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/../or-tools/**",
-                "/opt/localsolver_10_5/**"
+                "/opt/localsolver_11_0/**"
             ],
             "defines": [
                 "DEBUG"
@@ -19,7 +19,7 @@
                     "/usr/include",
                     "${workspaceFolder}",
                     "${workspaceFolder}/../or-tools",
-                    "/opt/localsolver_10_5/include"
+                    "/opt/localsolver_11_0/include"
                 ],
                 "limitSymbolsToIncludedHeaders": true,
                 "databaseFilename": ""
