@@ -75,6 +75,7 @@ public:
   LSExpression serviceExclusionCost;
   LSExpression servicePriority;
   LSExpression serviceMatrixIndex;
+  int maxTwStarts;
 
   LSExpression vehicleStartIndicies;
   LSExpression vehicleEndIndicies;
@@ -392,6 +393,7 @@ public:
       , timeMatrices(0, model.array())
       , distanceMatrices(0, model.array())
       , serviceQuantitiesMatrix(model.array())
+      , maxTwStarts(0)
       , vehicleCapacitiesMatrix(model.array())
       , twStartsArray(model.array())
       , twEndsArray(model.array())
@@ -604,6 +606,9 @@ public:
         for (const auto& tw : service.time_windows()) {
           serviceTWStarts.push_back(tw.start());
           serviceTWEnds.push_back(tw.end());
+          if (tw.start() > maxTwStarts) {
+            maxTwStarts = tw.start();
+          }
           if (service.late_multiplier() > 0) {
             serviceTWAbsoluteEnds.push_back(tw.end() + tw.maximum_lateness());
           } else {
