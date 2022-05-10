@@ -11,7 +11,7 @@
             "program": "${workspaceFolder}/tsp_localsolver",
             "args": [
                 "-instance_file",
-                "${workspaceFolder}/instance_licent_localsolver",
+                "${workspaceFolder}/instance_test_distance_matrix",
                 "-solution_file",
                 "/tmp/optimize-localsolver-output20180712-13097-xp90cp"
             ],
