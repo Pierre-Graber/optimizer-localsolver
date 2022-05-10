@@ -122,6 +122,31 @@ public:
     return model.min(model.range(0, nbTwsArray[service]), timeWindowSelector);
   }
 
+  void firstAndSecondSolving(vector<LSExpression> timeLeavingTheWarehouseConstraint) {
+    cout << model.toString() << endl;
+    localsolver.getParam().setTimeLimit((FLAGS_time_limit_in_ms / 1000) / 2);
+    if (FLAGS_only_first_solution) {
+      localsolver.getParam().setIterationLimit(1);
+    }
+
+    // With ls a LocalSolver object
+    auto iis = localsolver.computeInconsistency();
+    cout << iis.toString() << endl;
+
+    localsolver.solve();
+    LSStatistics stats = localsolver.getStatistics();
+    long nbOfIterations = stats.getNbIterations();
+    int runningTime = stats.getRunningTime();
+
+    model.open();
+    for (auto constraint : timeLeavingTheWarehouseConstraint) {
+      model.removeConstraint(constraint);
+    }
+    model.close();
+    localsolver.getParam().setTimeLimit((FLAGS_time_limit_in_ms / 1000) / 2);
+
+    localsolver.solve();
+  }
   LSExpression nextStart(const LSExpression& service, const LSExpression& time) {
     LSExpression timeWindowSelector =
         model.createLambdaFunction([&](LSExpression tw_index) {
@@ -900,27 +925,7 @@ public:
 
     setInitialSolution();
 
-    cout << model.toString() << endl;
-    localsolver.getParam().setTimeLimit(FLAGS_time_limit_in_ms / 1000);
-    if (FLAGS_only_first_solution) {
-      localsolver.getParam().setIterationLimit(30);
-    }
-
-    // With ls a LocalSolver object
-    auto iis = localsolver.computeInconsistency();
-    cout << iis.toString() << endl;
-
-    localsolver.solve();
-    LSStatistics stats = localsolver.getStatistics();
-    long nbOfIterations = stats.getNbIterations();
-    int runningTime = stats.getRunningTime();
-
-    model.open();
-    for (auto constraint : timeLeavingTheWarehouseConstraint) {
-      model.removeConstraint(constraint);
-    }
-    model.close();
-    localsolver.solve();
+    firstAndSecondSolving(timeLeavingTheWarehouseConstraint);
 
     ParseSolution(result, serviceSequences, totalDuration, vehiclesUsed,
                   latenessOfServicesOfVehicle, nbOfIterations, runningTime);
