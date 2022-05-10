@@ -392,7 +392,7 @@ public:
         }
       }
     }
-    result->set_duration(totalDuration.getValue());
+    result->set_duration(runningTime);
     result->set_iterations(nbOfIterations);
   }
 
