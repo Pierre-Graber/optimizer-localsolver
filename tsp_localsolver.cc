@@ -920,7 +920,7 @@ public:
     localsolver.solve();
 
     ParseSolution(result, serviceSequences, totalDuration, vehiclesUsed,
-                  latenessOfServicesOfVehicle, nbOfIterations);
+                  latenessOfServicesOfVehicle, nbOfIterations, runningTime);
 
     cout << " ----------------------Waiting times--------------------------  " << endl;
     for (int v = 0; v < problem.vehicles_size(); v++) {
