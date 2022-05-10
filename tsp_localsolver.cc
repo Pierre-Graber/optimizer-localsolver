@@ -211,7 +211,7 @@ public:
               model.indexOf(sequenceVehicle,
                             static_cast<lsint>(IdIndex(relation.linked_ids(link_index),
                                                        service_ids_map_))) <=
-              model.indexOf(sequenceVehicle, static_cast<lsint>(IdIndex(
+                  model.indexOf(sequenceVehicle, static_cast<lsint>(IdIndex(
                                                      relation.linked_ids(link_index + 1),
                                                      service_ids_map_))),
               true));
@@ -569,7 +569,7 @@ public:
       }
       vehicleCapacitiesMatrix.addOperand(model.array(
           vehicleCapacitiesMatrixVec[k].begin(), vehicleCapacitiesMatrixVec[k].end()));
-          
+
       vehicle_ids_map_[(string)vehicle.id()] = k;
       k++;
     }
@@ -949,7 +949,7 @@ public:
     firstAndSecondSolving(timeLeavingTheWarehouseConstraint);
 
     ParseSolution(result, serviceSequences, totalDuration, vehiclesUsed,
-                  latenessOfServicesOfVehicle, nbOfIterations, runningTime);
+                  latenessOfServicesOfVehicle);
 
     cout << " ----------------------Waiting times--------------------------  " << endl;
     for (int v = 0; v < problem.vehicles_size(); v++) {
@@ -1060,11 +1060,6 @@ public:
       for (int v = 0; v < problem.vehicles_size(); v++) {
         cout << "end times service of " << problem.vehicles(v).id() << " "
              << endTime[v].getArrayValue().toString() << endl;
-        // for (int endTimeIndex = 0; endTimeIndex <
-        // model.count(endTime[v]).getIntValue();
-        //      endTimeIndex++) {
-        //   cout << model.at(endTime, v, endTimeIndex).getIntValue() << endl;
-        // }
         cout << "total route duration :  " << problem.vehicles(v).id() << " "
              << routeDuration[v].getValue() << endl;
       }
