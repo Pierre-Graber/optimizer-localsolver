@@ -892,10 +892,7 @@ public:
                      service.vehicle_indices().begin(), service.vehicle_indices().end(),
                      back_inserter(incompatibleVehicleIndices));
       for (int64 incompatible_vehicle : incompatibleVehicleIndices) {
-        model.constraint(!model.contains(
-            serviceSequences[IdIndex(problem.vehicles(incompatible_vehicle).id(),
-                                     vehicle_ids_map_)],
-            s));
+        model.constraint(!model.contains(serviceSequences[incompatible_vehicle], s));
       }
       s++;
     }
