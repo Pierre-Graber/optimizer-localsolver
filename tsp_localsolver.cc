@@ -125,29 +125,39 @@ public:
   }
 
   void firstAndSecondSolving(vector<LSExpression> timeLeavingTheWarehouseConstraint) {
-    cout << model.toString() << endl;
-    localsolver.getParam().setTimeLimit((FLAGS_time_limit_in_ms / 1000) / 2);
     if (FLAGS_only_first_solution) {
-      localsolver.getParam().setIterationLimit(1);
+      model.open();
+      for (auto constraint : timeLeavingTheWarehouseConstraint) {
+        model.removeConstraint(constraint);
+      }
+      model.close();
+      localsolver.getParam().setIterationLimit(10000);
+      localsolver.solve();
     }
 
-    // With ls a LocalSolver object
+    else {
+      cout << model.toString() << endl;
+      localsolver.getParam().setTimeLimit((FLAGS_time_limit_in_ms / 1000));
+
     auto iis = localsolver.computeInconsistency();
     cout << iis.toString() << endl;
 
     localsolver.solve();
-    LSStatistics stats = localsolver.getStatistics();
-    long nbOfIterations = stats.getNbIterations();
-    int runningTime = stats.getRunningTime();
+
+      // LSStatistics stats = localsolver.getStatistics();
+      // long nbOfIterations = stats.getNbIterations();
+      // int runningTime = stats.getRunningTime();
 
     model.open();
     for (auto constraint : timeLeavingTheWarehouseConstraint) {
       model.removeConstraint(constraint);
     }
     model.close();
-    localsolver.getParam().setTimeLimit((FLAGS_time_limit_in_ms / 1000) / 2);
+
+      localsolver.getParam().setIterationLimit(10000);
 
     localsolver.solve();
+  }
   }
 
   LSExpression nextStart(const LSExpression& service, const LSExpression& time) {
