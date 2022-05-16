@@ -552,6 +552,7 @@ public:
             }
           } else {
             for (const auto& service : problem.services()) {
+              (void)service;
               timesFromWarehouse.push_back(0);
             }
           }
@@ -576,6 +577,7 @@ public:
             }
           } else {
             for (const auto& service : problem.services()) {
+              (void)service;
               distanceFromWarehouse.push_back(0);
             }
           }
@@ -601,6 +603,7 @@ public:
             }
           } else {
             for (const auto& service : problem.services()) {
+              (void)service;
               timesToWarehouse.push_back(0);
             }
           }
@@ -627,6 +630,7 @@ public:
             }
           } else {
             for (const auto& service : problem.services()) {
+              (void)service;
               distanceToWarehouse.push_back(0);
             }
           }
@@ -713,7 +717,7 @@ public:
         for (const auto& tw : service.time_windows()) {
           serviceTWStarts.push_back(tw.start());
           serviceTWEnds.push_back(tw.end());
-          if (tw.start() > maxTwStarts) {
+          if (static_cast<int>(tw.start()) > maxTwStarts) {
             maxTwStarts = tw.start();
           }
           if (service.late_multiplier() > 0) {
