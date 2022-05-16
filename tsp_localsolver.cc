@@ -410,9 +410,7 @@ public:
 
   void ParseSolution(localsolver_result::Result* result,
                      const vector<LSExpression>& servicesSequence,
-                     const LSExpression totalDuration,
-                     const vector<LSExpression> vehicleUsed,
-                     const vector<LSExpression>& latenessOfVehicle) {
+                     const vector<LSExpression> vehicleUsed) {
     LSStatistics stats = localsolver.getStatistics();
     long nbOfIterations = stats.getNbIterations();
     int runningTime = stats.getRunningTime();
@@ -420,7 +418,6 @@ public:
 
     for (int route_index = 0; route_index < problem.vehicles_size(); route_index++) {
         LSArray beginTimeArray = beginTime[route_index].getArrayValue();
-        LSArray arrivalTimeArray = arrivalTime[route_index].getArrayValue();
         LSArray endTimeArray = endTime[route_index].getArrayValue();
         LSArray latenessServicesOfVehicleArray =
             latenessOfServicesOfVehicle[route_index].getArrayValue();
@@ -428,10 +425,6 @@ public:
             timesToWarehouses[problem.vehicles(route_index).matrix_index()]
                              [problem.vehicles(route_index).end_index()]
                                  .getArrayValue();
-        LSArray timeFromWareHouseArray =
-            timesFromWarehouses[problem.vehicles(route_index).matrix_index()]
-                               [problem.vehicles(route_index).start_index()]
-                                   .getArrayValue();
       LSCollection servicesCollection =
           servicesSequence[route_index].getCollectionValue();
 
