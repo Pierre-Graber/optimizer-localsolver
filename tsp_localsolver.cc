@@ -892,7 +892,7 @@ public:
       waitingTime[k] = model.sum(model.range(0, c), waitingTimeSelector);
 
       routeDuration[k] = model.iif(
-          problem.vehicles(k).cost_time_multiplier() == 0, 0,
+          equals(problem.vehicles(k).cost_time_multiplier(), 0), 0,
           model.iif(c > 0,
                     endTime[k][c - 1] +
                         timesToWarehouses[vehicle.matrix_index()][vehicle.end_index()]
@@ -1043,19 +1043,20 @@ public:
 
     firstAndSecondSolving(timeLeavingTheWarehouseConstraint);
 
-    ParseSolution(result, serviceSequences, totalDuration, vehiclesUsed,
-                  latenessOfServicesOfVehicle);
+    ParseSolution(result, serviceSequences, vehiclesUsed);
 
-    cout << " ----------------------Waiting times--------------------------  " << endl;
-    for (int v = 0; v < problem.vehicles_size(); v++) {
-      cout << "waiting time service of " << problem.vehicles(v).id() << " "
-           << waitingTime[v].getValue() << endl;
-      cout << "waiting time before start" << problem.vehicles(v).id() << " "
-           << timeLeavingTheWarehouse[v].getValue() << endl;
-    }
-    if (problem.services_size() < 10) {
-      for (int s = 0; s < problem.services_size(); s++) {
-        cout << " late multiplier of service " + s
+    // cout << " ----------------------Waiting times--------------------------  " << endl;
+    // for (int v = 0; v < problem.vehicles_size(); v++) {
+    //   cout << "waiting time service of " << problem.vehicles(v).id() << " "
+    //        << waitingTime[v].getValue() << endl;
+    //   cout << "waiting time before start" << problem.vehicles(v).id() << " "
+    //        << timeLeavingTheWarehouse[v].getValue() << endl;
+    // }
+
+    if (problem.services_size() < 20) {
+      for (int service_index = 0; service_index < problem.services_size();
+           service_index++) {
+        cout << " late multiplier of service " + to_string(service_index)
              << serviceLateMultiplier.getArrayValue().toString() << endl;
       }
       cout << model.toString() << endl;
@@ -1201,9 +1202,10 @@ void readData(localsolver_vrp::Problem& problem) {
   }
 
   for (const auto& vehicle : problem.vehicles()) {
-    cout << "cost waiting time multiplier : " << vehicle.cost_waiting_time_multiplier()
-         << endl;
-    cout << "cost time multiplier : " << vehicle.cost_time_multiplier() << endl;
+    // cout << "cost waiting time multiplier : " <<
+    // vehicle.cost_waiting_time_multiplier()
+    //      << endl;
+    // cout << "cost time multiplier : " << vehicle.cost_time_multiplier() << endl;
     if (!(equals(vehicle.cost_waiting_time_multiplier(),
                  vehicle.cost_time_multiplier())) &&
         !(equals(vehicle.cost_waiting_time_multiplier(), 0))) {
@@ -1232,10 +1234,10 @@ void readData(localsolver_vrp::Problem& problem) {
       throw std::invalid_argument(" ERROR ======================= "
                                   "free_return is not implemented yet");
     }
-    if (vehicle.rests_size() > 0) {
-      throw std::invalid_argument(" ERROR ======================= "
-                                  "rests are not implemented yet");
-    }
+    // if (vehicle.rests_size() > 0) {
+    //   throw std::invalid_argument(" ERROR ======================= "
+    //                               "rests are not implemented yet");
+    // }
     if ((!vehicle.shift_preference().empty()) &&
         (vehicle.shift_preference() != "minimize_span" &&
          vehicle.shift_preference() != "force_start")) {
