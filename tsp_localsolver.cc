@@ -813,12 +813,17 @@ public:
                           ? static_cast<lsint>(vehicle.time_window().start())
                           : 0;
 
-      if (problem.vehicles(k).shift_preference() == "force_start") {
+      if (vehicle.shift_preference() == "force_start") {
         timeLeavingTheWarehouse[k] = model.intVar(twStart, twStart);
+      } else if (maxTwStarts > 0) {
+        timeLeavingTheWarehouse[k] =
+            model.intVar(twStart, maxTwStarts);
       } else {
-        cout << "fixme !!!!!" << endl;
-        timeLeavingTheWarehouse[k] = model.intVar(twStart, 30000); // TODO : max TWstarts.
+        timeLeavingTheWarehouse[k] =
+            model.intVar(twStart, twStart); 
       }
+
+      timeLeavingTheWarehouse[k].setName("timeLeavingTheWarehouse" + vehicle.id());
 
       timeLeavingTheWarehouseConstraint[k] =
           model.eq(timeLeavingTheWarehouse[k], twStart);
