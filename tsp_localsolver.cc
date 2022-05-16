@@ -312,14 +312,91 @@ public:
   }
 
   void setInitialSolution() {
+    LSSolution sol = localsolver.getSolution();
     std::unordered_set<string> initializedServiceIds;
+    map<string, localsolver_vrp::TimeWindow> used_tw_for_service_map;
     for (const auto& route : problem.routes()) {
+      vector<int> start_time;
+      start_time.reserve(route.service_ids().size());
+      const localsolver_vrp::Vehicle& vehicle =
+          problem.vehicles(IdIndex(route.vehicle_id(), vehicle_ids_map_));
+      const RepeatedField timeMatrix = problem.matrices(vehicle.matrix_index()).time();
       LSExpression listExpr =
-          localsolver.getModel().getExpression("sequence_" + route.vehicle_id());
+          localsolver.getModel().getExpression("sequence_" + vehicle.id());
       LSCollection sequence = listExpr.getCollectionValue();
+
+      int time_matrix_size = sqrt(problem.matrices(vehicle.matrix_index()).time_size());
+      int previous_end = static_cast<int>(vehicle.time_window().start()) | 0;
+      int previous_location_index = vehicle.start_index();
       for (const auto& service_id : route.service_ids()) {
+        const localsolver_vrp::Service& service =
+            problem.services(IdIndex(service_id, service_ids_map_));
+        uint current_arrival = previous_end +
+                               timeMatrix.at(previous_location_index * time_matrix_size +
+                                             service.matrix_index()) +
+                               service.setup_duration();
+        int current_start = current_arrival;
+        int current_location_index = service.matrix_index();
+        int tw_index = 0;
+        for (const auto& tw : service.time_windows()) {
+          if (current_arrival <= (service.late_multiplier() > 0
+                                      ? tw.end() + tw.maximum_lateness()
+                                      : tw.end())) {
+            current_start = max<uint>(current_arrival, tw.start());
+            used_tw_for_service_map[service_id] = tw;
+            break;
+          }
+          tw_index++;
+        }
+        start_time.push_back(current_start);
+        // cout << "Begin_time_" + service.id() << " : " << current_start << endl;
+        previous_end = current_start + service.duration();
+        previous_location_index = current_location_index;
+        if (service_ids_map_.count(service_id)) {
         sequence.add(IdIndex(service_id, service_ids_map_));
         initializedServiceIds.insert(service_id);
+      }
+    }
+
+      localsolver_vrp::Service next_service = problem.services(
+          IdIndex(route.service_ids(start_time.size() - 1), service_ids_map_));
+      for (int service_index = start_time.size() - 2; service_index >= 0;
+           service_index--) {
+        localsolver_vrp::Service current_service =
+            problem.services(IdIndex(route.service_ids(service_index), service_ids_map_));
+        int time_between_two_starts =
+            start_time[service_index + 1] - start_time[service_index];
+
+        int idle_time = time_between_two_starts -
+                        (timeMatrix.at(current_service.matrix_index() * time_matrix_size +
+                                       next_service.matrix_index()) +
+                         current_service.duration() +
+                         (current_service.matrix_index() == next_service.matrix_index()
+                              ? 0
+                              : next_service.setup_duration()));
+        if (idle_time > 0) {
+          const localsolver_vrp::TimeWindow& tw_used =
+              used_tw_for_service_map.find(current_service.id())->second;
+          if (start_time[service_index] + idle_time <= (int)tw_used.end()) {
+            cout << " tw_used : "
+                 << " start : " << tw_used.start() << ", end :" << tw_used.end() << endl;
+            cout << " intial start time : " << start_time[service_index]
+                 << " mooved start time : " << start_time[service_index] + idle_time
+                 << endl;
+            ;
+            start_time[service_index] += idle_time;
+          }
+        }
+        int setTimeLeavingWarehouse =
+            start_time[0] -
+            timeMatrix.at(
+                vehicle.start_index() * time_matrix_size +
+                problem.services(IdIndex(route.service_ids(0), service_ids_map_))
+                    .matrix_index());
+        LSExpression tLTW = localsolver.getModel().getExpression(
+            "timeLeavingTheWarehouse" + vehicle.id());
+        sol.setValue(tLTW, static_cast<lsint>(setTimeLeavingWarehouse));
+        next_service = current_service;
       }
     }
     LSCollection sequenceUnassigned =
@@ -328,11 +405,6 @@ public:
     for (const auto& service : problem.services()) {
       if (initializedServiceIds.count(service.id()) == 0)
         sequenceUnassigned.add(IdIndex(service.id(), service_ids_map_));
-    }
-    if (problem.routes_size() > 0) {
-      LSExpression listExpr =
-          localsolver.getModel().getExpression("sequence_" + problem.vehicles(0).id());
-      cout << endl;
     }
   }
 
