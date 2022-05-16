@@ -130,24 +130,15 @@ public:
   }
 
   void firstAndSecondSolving(vector<LSExpression> timeLeavingTheWarehouseConstraint) {
-    if (FLAGS_only_first_solution) {
-      model.open();
-      for (auto constraint : timeLeavingTheWarehouseConstraint) {
-        model.removeConstraint(constraint);
-      }
-      model.close();
-      localsolver.getParam().setIterationLimit(10000);
-      localsolver.solve();
-    }
-
-    else {
       cout << model.toString() << endl;
-      localsolver.getParam().setTimeLimit((FLAGS_time_limit_in_ms / 1000));
+    if (!FLAGS_only_first_solution) {
+      localsolver.getParam().setTimeLimit((FLAGS_time_limit_in_ms / 1000) / 2);
 
     auto iis = localsolver.computeInconsistency();
     cout << iis.toString() << endl;
 
     localsolver.solve();
+    }
 
       // LSStatistics stats = localsolver.getStatistics();
       // long nbOfIterations = stats.getNbIterations();
@@ -159,10 +150,9 @@ public:
     }
     model.close();
 
-      localsolver.getParam().setIterationLimit(10000);
+    localsolver.getParam().setTimeLimit((FLAGS_time_limit_in_ms / 1000) / 2);
 
     localsolver.solve();
-  }
   }
 
   LSExpression nextStart(const LSExpression& service, const LSExpression& time) {
