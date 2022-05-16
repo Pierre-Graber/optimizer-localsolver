@@ -816,11 +816,9 @@ public:
       if (vehicle.shift_preference() == "force_start") {
         timeLeavingTheWarehouse[k] = model.intVar(twStart, twStart);
       } else if (maxTwStarts > 0) {
-        timeLeavingTheWarehouse[k] =
-            model.intVar(twStart, maxTwStarts);
+        timeLeavingTheWarehouse[k] = model.intVar(twStart, maxTwStarts);
       } else {
-        timeLeavingTheWarehouse[k] =
-            model.intVar(twStart, twStart); 
+        timeLeavingTheWarehouse[k] = model.intVar(twStart, twStart);
       }
 
       timeLeavingTheWarehouse[k].setName("timeLeavingTheWarehouse" + vehicle.id());
