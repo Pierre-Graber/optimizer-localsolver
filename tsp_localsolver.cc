@@ -58,6 +58,11 @@ DEFINE_string(routing_search_parameters,
               "Text proto RoutingSearchParameters (possibly partial) that will "
               "override the DefaultRoutingSearchParameters()");
 
+bool equals(double a, double b) {
+  float EPSILON = 10e-6;
+  return fabs(a - b) < EPSILON;
+}
+
 class localsolver_VRP {
 public:
   const localsolver_vrp::Problem problem;
@@ -1119,10 +1124,6 @@ public:
   }
 };
 
-bool equals(double a, double b) {
-  float EPSILON = 10e-6;
-  return fabs(a - b) < EPSILON;
-}
 void readData(localsolver_vrp::Problem& problem) {
   const string filename = absl::GetFlag(FLAGS_instance_file);
   fstream input(filename, ios::in | ios::binary);
