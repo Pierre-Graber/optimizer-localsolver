@@ -914,7 +914,16 @@ public:
                                             [sequenceVehicle[c - 1]],
                     0);
       routeDistanceCost[k] =
-          routeDistance[k] * problem.vehicles(k).cost_distance_multiplier();
+          (routeDistance[k] -
+           model.iif(vehicle.free_approach(),
+                     distanceFromWarehouses[vehicle.matrix_index()][vehicle.start_index()]
+                                           [sequenceVehicle[0]],
+                     0) -
+           model.iif(vehicle.free_return(),
+                     distanceToWarehouses[vehicle.matrix_index()][vehicle.end_index()]
+                                         [sequenceVehicle[c - 1]],
+                     0)) *
+          vehicle.cost_distance_multiplier();
       // End of each visit
 
       LSExpression endSelector =
@@ -968,16 +977,26 @@ public:
       });
       waitingTime[k] = model.sum(model.range(0, c), waitingTimeSelector);
 
-      routeDuration[k] = model.iif(
-          equals(problem.vehicles(k).cost_time_multiplier(), 0), 0,
+      routeDuration[k] =
           model.iif(c > 0,
                     endTime[k][c - 1] +
                         timesToWarehouses[vehicle.matrix_index()][vehicle.end_index()]
                                          [sequenceVehicle[c - 1]] -
                         timeLeavingTheWarehouse[k],
-                    0));
+                    0);
       routeDurationCost[k] =
-          routeDuration[k] * problem.vehicles(k).cost_time_multiplier();
+          (routeDuration[k] -
+           model.iif(vehicle.free_approach(),
+                     timesFromWarehouses[vehicle.matrix_index()][vehicle.start_index()]
+                                        [sequenceVehicle[0]],
+                     0) -
+           model.iif(vehicle.free_return(),
+                     timesToWarehouses[vehicle.matrix_index()][vehicle.end_index()]
+                                      [sequenceVehicle[c - 1]],
+                     0)) *
+          vehicle.cost_time_multiplier();
+
+      // routeDurationCost[k] = routeDuration[k] * vehicle.cost_time_multiplier();
 
       timesToWarehouses[vehicle.matrix_index()][vehicle.end_index()].setName(
           "timesToWarehouses of vehicle" + to_string(k));
@@ -1302,14 +1321,6 @@ void readData(localsolver_vrp::Problem& problem) {
       throw std::invalid_argument(" ERROR ======================= "
                                   "free_approach is not implemented yet");
     }
-    if (vehicle.free_return()) {
-      throw std::invalid_argument(" ERROR ======================= "
-                                  "free_return is not implemented yet");
-    }
-    // if (vehicle.rests_size() > 0) {
-    //   throw std::invalid_argument(" ERROR ======================= "
-    //                               "rests are not implemented yet");
-    // }
     if ((!vehicle.shift_preference().empty()) &&
         (vehicle.shift_preference() != "minimize_span" &&
          vehicle.shift_preference() != "force_start")) {
