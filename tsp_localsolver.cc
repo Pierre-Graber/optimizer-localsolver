@@ -7,6 +7,7 @@
 #include <fstream>
 #include <iomanip>
 #include <lsarray.h>
+#include <lscallbacktype.h>
 #include <lscollection.h>
 #include <lsexpression.h>
 #include <lssolution.h>
@@ -63,6 +64,40 @@ bool equals(double a, double b) {
   return fabs(a - b) < EPSILON;
 }
 
+class MyCallback : public LSCallback {
+private:
+  int lastBestRunningTime;
+  lsdouble lastBestValue;
+  const int64 minimum_duration_in_s;
+  const int64 time_out_multiplier;
+
+public:
+  MyCallback(const int64 minimum_duration, const int64 time_out_multip)
+      : minimum_duration_in_s(minimum_duration / 1000)
+      , time_out_multiplier(time_out_multip) {
+    lastBestRunningTime = 0;
+    lastBestValue = CUSTOM_MAX_INT;
+  }
+
+  void callback(LocalSolver& ls, LSCallbackType type) {
+    (void)type;
+    LSStatistics stats = ls.getStatistics();
+    LSExpression obj = ls.getModel().getObjective(0);
+
+    if (obj.getDoubleValue() < lastBestValue) {
+      lastBestRunningTime = stats.getRunningTime();
+      lastBestValue = obj.getDoubleValue();
+    }
+    cout << "getRunningTime " << stats.getRunningTime() << " " << lastBestRunningTime
+         << " " << lastBestValue << endl;
+
+    if (stats.getRunningTime() > minimum_duration_in_s &&
+        stats.getRunningTime() > time_out_multiplier * lastBestRunningTime) {
+      cout << ">>>>>>>  Resolution stopped" << endl;
+      ls.stop();
+    }
+  }
+};
 class localsolver_VRP {
 public:
   const localsolver_vrp::Problem problem;
@@ -131,13 +166,20 @@ public:
 
   void firstAndSecondSolving(vector<LSExpression> timeLeavingTheWarehouseConstraint) {
       cout << model.toString() << endl;
+    std::unique_ptr<MyCallback> cbp;
     if (!FLAGS_only_first_solution) {
+      cbp =
+          std::make_unique<MyCallback>(FLAGS_minimum_duration, FLAGS_time_out_multiplier);
+      localsolver.addCallback(localsolver::CT_TimeTicked, cbp.get());
       localsolver.getParam().setTimeLimit((FLAGS_time_limit_in_ms / 1000) / 2);
 
-    auto iis = localsolver.computeInconsistency();
-    cout << iis.toString() << endl;
+      // auto iis = localsolver.computeInconsistency();
+      // cout << iis.toString() << endl;
 
     localsolver.solve();
+    } else {
+      cbp = std::make_unique<MyCallback>(5000, FLAGS_time_out_multiplier);
+      localsolver.addCallback(localsolver::CT_TimeTicked, cbp.get());
     }
 
       // LSStatistics stats = localsolver.getStatistics();
