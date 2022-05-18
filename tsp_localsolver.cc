@@ -182,10 +182,6 @@ public:
       localsolver.addCallback(localsolver::CT_TimeTicked, cbp.get());
     }
 
-      // LSStatistics stats = localsolver.getStatistics();
-      // long nbOfIterations = stats.getNbIterations();
-      // int runningTime = stats.getRunningTime();
-
     model.open();
     for (auto constraint : timeLeavingTheWarehouseConstraint) {
       model.removeConstraint(constraint);
