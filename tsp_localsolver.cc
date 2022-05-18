@@ -1043,7 +1043,7 @@ public:
 
     LSExpression totalExcessLateness =
         model.sum(excessLateness.begin(), excessLateness.end());
-    // model.constraint(totalExcessLateness == 0);
+    model.constraint(totalExcessLateness == 0);
 
     LSExpression totalLatenessCost =
         model.max(0, model.sum(latenessCost.begin(), latenessCost.end()));
@@ -1091,13 +1091,8 @@ public:
     totalFixedCost = model.sum(routeFixedCost.begin(), routeFixedCost.end());
     totalFixedCost.setName("totalFixedCost");
 
-    // model.minimize(nbVehiclesUsed);
-    model.minimize(totalExcessLateness);
-    model.minimize(totalExclusionCost);
-    model.minimize(totalDurationCost + totalDistanceCost + totalLatenessCost +
-                   totalFixedCost);
-
-    model.close();
+    model.minimize(totalExclusionCost + totalDurationCost + totalDistanceCost +
+                   totalLatenessCost + totalFixedCost);
 
     setInitialSolution(serviceSequences);
 
