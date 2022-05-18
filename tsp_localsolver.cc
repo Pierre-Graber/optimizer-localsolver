@@ -339,7 +339,36 @@ public:
     return "not found";
   }
 
-  void setInitialSolution() {
+  void setInitialSolution(vector<LSExpression> serviceSequences) {
+    if (FLAGS_only_first_solution) {
+      int route_index = 0;
+      for (auto const& route : problem.routes()) {
+        LSExpression sequenceVehicle = serviceSequences[route_index];
+        for (int service_index = 0; service_index < route.service_ids_size() - 1;
+             service_index++) {
+          LSExpression sequenceContainsCurrentService = model.contains(
+              sequenceVehicle, static_cast<lsint>(IdIndex(
+                                   route.service_ids(service_index), service_ids_map_)));
+          LSExpression sequenceContainsNextService = model.contains(
+              sequenceVehicle,
+              static_cast<lsint>(
+                  IdIndex(route.service_ids(service_index + 1), service_ids_map_)));
+          LSExpression currentServiceIndexInSequence = model.indexOf(
+              sequenceVehicle, static_cast<lsint>(IdIndex(
+                                   route.service_ids(service_index), service_ids_map_)));
+          LSExpression nextServiceIndexInSequence =
+              model.indexOf(sequenceVehicle,
+                            static_cast<lsint>(IdIndex(
+                                route.service_ids(service_index + 1), service_ids_map_)));
+          model.constraint(sequenceContainsCurrentService == sequenceContainsNextService);
+          model.constraint(model.iif(
+              sequenceContainsCurrentService,
+              currentServiceIndexInSequence + 1 == nextServiceIndexInSequence, true));
+        }
+        route_index++;
+      }
+    }
+    model.close();
     LSSolution sol = localsolver.getSolution();
     std::unordered_set<string> initializedServiceIds;
     map<string, localsolver_vrp::TimeWindow> used_tw_for_service_map;
@@ -1070,7 +1099,7 @@ public:
 
     model.close();
 
-    setInitialSolution();
+    setInitialSolution(serviceSequences);
 
     firstAndSecondSolving(timeLeavingTheWarehouseConstraint);
 
