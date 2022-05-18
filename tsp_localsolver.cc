@@ -372,6 +372,7 @@ public:
     LSSolution sol = localsolver.getSolution();
     std::unordered_set<string> initializedServiceIds;
     map<string, localsolver_vrp::TimeWindow> used_tw_for_service_map;
+    int index_vehicle = 0;
     for (const auto& route : problem.routes()) {
       if (problem.vehicles(index_vehicle).shift_preference() == "force_start") {
         LSExpression tLTW = localsolver.getModel().getExpression(
@@ -391,10 +392,12 @@ public:
       int time_matrix_size = sqrt(problem.matrices(vehicle.matrix_index()).time_size());
       int previous_end = static_cast<int>(vehicle.time_window().start()) | 0;
       int previous_location_index = vehicle.start_index();
+        int index_service = 0;
       for (const auto& service_id : route.service_ids()) {
         const localsolver_vrp::Service& service =
             problem.services(IdIndex(service_id, service_ids_map_));
-        uint current_arrival = previous_end +
+          uint current_arrival =
+              previous_end +
                                timeMatrix.at(previous_location_index * time_matrix_size +
                                              service.matrix_index()) +
                                service.setup_duration();
