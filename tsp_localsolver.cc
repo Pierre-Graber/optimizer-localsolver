@@ -1383,10 +1383,6 @@ void readData(localsolver_vrp::Problem& problem) {
                                     " refill quantities are not implemented yet");
       }
     }
-    if (service.priority() != 4) {
-      throw std::invalid_argument(" ERROR ======================= "
-                                  " priority of service are not implemented yet");
-    }
   }
 };
 
