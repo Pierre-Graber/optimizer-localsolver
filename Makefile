@@ -4,9 +4,9 @@ LOCALSOLVER_TOP = /opt/localsolver_11_0
 CFLAGS := -std=c++17 -isystem $(OR_TOOLS_TOP)/include -isystem $(LOCALSOLVER_TOP)/include
 
 # During development uncomment the next line to have debug checks and other verifications
-DEVELOPMENT = true
+DEVELOPMENT = false
 ifeq ($(DEVELOPMENT), true)
-  CFLAGS := $(CFLAGS) -O0 -DDEBUG -ggdb3 -fsanitize=address -fkeep-inline-functions -fno-inline-small-functions
+  CFLAGS := $(CFLAGS) -O0 -DDEBUG -ggdb3 -fsanitize=address -fkeep-inline-functions -fno-inline-small-functions -rdynamic
   CXX := LSAN_OPTION=verbosity=1:log_threads=1 $(CXX) # adress sanitizer works only if the executable launched without gdb
 else
   CFLAGS := $(CFLAGS) -O3 -DNDEBUG

@@ -17,6 +17,13 @@
 #include <typeinfo>
 #include <vector>
 
+// https://stackoverflow.com/a/77336
+#include <execinfo.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
 #include "./localsolver_result.pb.h"
 #include "./localsolver_vrp.pb.h"
 // #include "callback_ls.cpp"
@@ -58,6 +65,19 @@ DEFINE_string(routing_search_parameters,
               // "}",
               "Text proto RoutingSearchParameters (possibly partial) that will "
               "override the DefaultRoutingSearchParameters()");
+
+void handler(int sig) {
+  void* array[10];
+  size_t size;
+
+  // get void*'s for all entries on the stack
+  size = backtrace(array, 10);
+
+  // print out all the frames to stderr
+  fprintf(stderr, "Error: signal %d:\n", sig);
+  backtrace_symbols_fd(array, size, STDERR_FILENO);
+  exit(1);
+}
 
 bool equals(double a, double b) {
   float EPSILON = 10e-6;
@@ -1371,6 +1391,7 @@ void readData(localsolver_vrp::Problem& problem) {
 };
 
 int main(int argc, char** argv) {
+  signal(SIGSEGV, handler);
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   gflags::ParseCommandLineFlags(&argc, &argv, true);
