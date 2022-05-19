@@ -193,12 +193,16 @@ public:
       localsolver.addCallback(localsolver::CT_TimeTicked, cbp.get());
       localsolver.getParam().setTimeLimit((FLAGS_time_limit_in_ms / 1000) / 2);
 
-      // auto iis = localsolver.computeInconsistency();
-      // cout << iis.toString() << endl;
+      auto iis = localsolver.computeInconsistency();
+      cout << iis.toString() << endl;
 
     localsolver.solve();
     } else {
-      cbp = std::make_unique<MyCallback>(5000, FLAGS_time_out_multiplier);
+      // localsolver.getParam().setIterationLimit(1);
+
+      auto iis = localsolver.computeInconsistency();
+      cout << iis.toString() << endl;
+      cbp = std::make_unique<MyCallback>(3000, FLAGS_time_out_multiplier);
       localsolver.addCallback(localsolver::CT_TimeTicked, cbp.get());
     }
 
