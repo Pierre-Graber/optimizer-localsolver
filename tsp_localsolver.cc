@@ -394,18 +394,16 @@ public:
     LSSolution sol = localsolver.getSolution();
     std::unordered_set<string> initializedServiceIds;
     map<string, localsolver_vrp::TimeWindow> used_tw_for_service_map;
-    int index_vehicle = 0;
     for (const auto& route : problem.routes()) {
-      if (problem.vehicles(index_vehicle).shift_preference() == "force_start") {
+      int route_index = IdIndex(route.vehicle_id(), vehicle_ids_map_);
+      const localsolver_vrp::Vehicle& vehicle = problem.vehicles(route_index);
+      if (vehicle.shift_preference() == "force_start") {
         LSExpression tLTW = localsolver.getModel().getExpression(
-            "timeLeavingTheWarehouse" + problem.vehicles(index_vehicle).id());
-        sol.setValue(tLTW, static_cast<lsint>(
-                               problem.vehicles(index_vehicle).time_window().start()));
+            "timeLeavingTheWarehouse" + vehicle.id());
+        sol.setValue(tLTW, static_cast<lsint>(vehicle.time_window().start()));
       } else {
       vector<int> start_time;
       start_time.reserve(route.service_ids().size());
-      const localsolver_vrp::Vehicle& vehicle =
-          problem.vehicles(IdIndex(route.vehicle_id(), vehicle_ids_map_));
       const RepeatedField timeMatrix = problem.matrices(vehicle.matrix_index()).time();
       LSExpression listExpr =
           localsolver.getModel().getExpression("sequence_" + vehicle.id());
@@ -426,6 +424,9 @@ public:
         int current_start = current_arrival;
         int current_location_index = service.matrix_index();
         int tw_index = 0;
+          if (service.time_windows_size() == 0) {
+            current_start = current_arrival;
+          } else {
         for (const auto& tw : service.time_windows()) {
           if (current_arrival <= (service.late_multiplier() > 0
                                       ? tw.end() + tw.maximum_lateness()
@@ -436,6 +437,7 @@ public:
           }
           tw_index++;
         }
+          }
         start_time.push_back(current_start);
         previous_end = current_start + service.duration();
         previous_location_index = current_location_index;
@@ -467,6 +469,10 @@ public:
         if (idle_time > 0) {
           const localsolver_vrp::TimeWindow& tw_used =
               used_tw_for_service_map.find(current_service.id())->second;
+            if (used_tw_for_service_map.find(current_service.id()) ==
+                used_tw_for_service_map.end()) {
+              start_time[service_index] += idle_time;
+            } else {
             cout << " tw_used : "
                  << " start : " << tw_used.start() << ", end :" << tw_used.end()
                  << ", absolute_end :" << tw_used.end() + tw_used.maximum_lateness()
@@ -480,6 +486,7 @@ public:
                                              : 0) -
                                         start_time[service_index]);
             cout << " mooved start time : " << start_time[service_index] << endl;
+            }
           }
           next_service = current_service;
         }
@@ -496,7 +503,6 @@ public:
             "timeLeavingTheWarehouse" + vehicle.id());
         sol.setValue(tLTW, static_cast<lsint>(setTimeLeavingWarehouse));
       }
-      index_vehicle++;
     }
     LSCollection sequenceUnassigned =
         localsolver.getModel().getExpression("sequence_unassigned").getCollectionValue();
