@@ -290,18 +290,20 @@ public:
               model.contains(sequenceVehicle,
                              static_cast<lsint>(IdIndex(
                                  relation.linked_ids(link_index + 1), service_ids_map_)));
-          LSExpression currentServiceIndexInSequence = model.indexOf(
+          LSExpression indexOfCurrentServiceInSequence = model.indexOf(
               sequenceVehicle, static_cast<lsint>(IdIndex(relation.linked_ids(link_index),
                                                           service_ids_map_)));
-          LSExpression nextServiceIndexInSequence =
+          LSExpression indexOfNextServiceInSequence =
               model.indexOf(sequenceVehicle,
                             static_cast<lsint>(IdIndex(
                                 relation.linked_ids(link_index + 1), service_ids_map_)));
 
-          model.constraint(sequenceContainsCurrentService == sequenceContainsNextService);
           model.constraint(model.iif(
-              sequenceContainsCurrentService,
-              currentServiceIndexInSequence + 1 == nextServiceIndexInSequence, true));
+              sequenceContainsNextService,
+              sequenceContainsCurrentService == sequenceContainsNextService, true));
+          model.constraint(model.iif(
+              sequenceContainsNextService,
+              indexOfCurrentServiceInSequence + 1 == indexOfNextServiceInSequence, true));
         }
       }
     }
