@@ -154,6 +154,7 @@ public:
   LSExpression nbTwsArray;
   LSExpression waitNextTWArray;
 
+  vector<LSExpression> startTimeVehicle;
   vector<LSExpression> routeDuration;
   vector<LSExpression> routeDurationCost;
   vector<LSExpression> routeDistance;
@@ -543,7 +544,7 @@ public:
           localsolver_result::Activity* start_route = route->add_activities();
           start_route->set_type("start");
           start_route->set_index(-1);
-          start_route->set_start_time(timeLeavingTheWarehouse[route_index].getIntValue());
+          start_route->set_start_time(startTimeVehicle[route_index].getIntValue());
         }
 
         for (int activity_index = 0; activity_index < servicesCollection.count();
@@ -585,13 +586,13 @@ public:
           localsolver_result::Activity* start_route = route->add_activities();
           start_route->set_type("start");
           start_route->set_index(-1);
-          start_route->set_start_time(timeLeavingTheWarehouse[route_index].getIntValue());
+          start_route->set_start_time(startTimeVehicle[route_index].getIntValue());
         }
         if (problem.vehicles(route_index).end_index() != -1) {
           localsolver_result::Activity* end_route = route->add_activities();
           end_route->set_type("end");
           end_route->set_index(-1);
-          end_route->set_start_time(timeLeavingTheWarehouse[route_index].getIntValue());
+          end_route->set_start_time(startTimeVehicle[route_index].getIntValue());
         }
       }
     }
@@ -613,6 +614,7 @@ public:
       , twEndsArray(model.array())
       , twAbsoluteEndsArray(model.array())
       , waitNextTWArray(model.array())
+      , startTimeVehicle(problem.vehicles_size())
       , routeDuration(problem.vehicles_size())
       , routeDurationCost(problem.vehicles_size())
       , routeDistance(problem.vehicles_size())
@@ -924,10 +926,21 @@ public:
 
       if (vehicle.shift_preference() == "force_start") {
         timeLeavingTheWarehouse[k] = model.intVar(twStart, twStart);
+        startTimeVehicle[k] = timeLeavingTheWarehouse[k];
       } else if (maxTwStarts > 0) {
         timeLeavingTheWarehouse[k] = model.intVar(twStart, maxTwStarts);
+        startTimeVehicle[k] = model.max(
+            timeLeavingTheWarehouse[k],
+            model.iif(c > 0,
+                      model.max(twStart, model.at(twStartsArray, sequenceVehicle[0], 0) -
+                                             timesFromWarehouses[vehicle.matrix_index()]
+                                                                [vehicle.start_index()]
+                                                                [sequenceVehicle[0]] -
+                                             serviceSetUpDuration[sequenceVehicle[0]]),
+                      0));
       } else {
         timeLeavingTheWarehouse[k] = model.intVar(twStart, twStart);
+        startTimeVehicle[k] = timeLeavingTheWarehouse[k];
       }
 
       timeLeavingTheWarehouse[k].setName("timeLeavingTheWarehouse" + vehicle.id());
@@ -967,7 +980,7 @@ public:
                        sequenceVehicle[i],
                        model.iif(
                            i == 0,
-                           timeLeavingTheWarehouse[k] +
+                           startTimeVehicle[k] +
                                timesFromWarehouses[vehicle.matrix_index()]
                                                   [vehicle.start_index()]
                                                   [sequenceVehicle[i]] +
@@ -1005,7 +1018,7 @@ public:
             arrivalTime[k][i] -
                 timesFromWarehouses[vehicle.matrix_index()][vehicle.start_index()]
                                    [sequenceVehicle[i]] -
-                timeLeavingTheWarehouse[k],
+                startTimeVehicle[k],
             model.max(0, arrivalTime[k][i] - endTime[k][i - 1] -
                              model.at(timeMatrices[vehicle.matrix_index()],
                                       sequenceVehicle[i - 1], sequenceVehicle[i])));
@@ -1017,7 +1030,7 @@ public:
                     endTime[k][c - 1] +
                         timesToWarehouses[vehicle.matrix_index()][vehicle.end_index()]
                                          [sequenceVehicle[c - 1]] -
-                        timeLeavingTheWarehouse[k],
+                        startTimeVehicle[k],
                     0);
       routeDurationCost[k] =
           (routeDuration[k] -
