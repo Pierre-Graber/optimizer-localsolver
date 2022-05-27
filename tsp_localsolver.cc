@@ -209,7 +209,7 @@ public:
   }
 
   void firstAndSecondSolving(vector<LSExpression> timeLeavingTheWarehouseConstraint) {
-      cout << model.toString() << endl;
+    cout << model.toString() << endl;
     std::unique_ptr<MyCallback> cbp;
     if (!FLAGS_only_first_solution) {
       cbp =
@@ -220,7 +220,7 @@ public:
       auto iis = localsolver.computeInconsistency();
       cout << iis.toString() << endl;
 
-    localsolver.solve();
+      localsolver.solve();
     } else {
       // localsolver.getParam().setIterationLimit(1);
 
@@ -490,68 +490,68 @@ public:
             "timeLeavingTheWarehouse" + vehicle.id());
         sol.setValue(tLTW, static_cast<lsint>(vehicle.time_window().start()));
       } else {
-      vector<int> start_time;
-      start_time.reserve(route.service_ids().size());
-      const RepeatedField timeMatrix = problem.matrices(vehicle.matrix_index()).time();
-      LSExpression listExpr =
-          localsolver.getModel().getExpression("sequence_" + vehicle.id());
-      LSCollection sequence = listExpr.getCollectionValue();
+        vector<int> start_time;
+        start_time.reserve(route.service_ids().size());
+        const RepeatedField timeMatrix = problem.matrices(vehicle.matrix_index()).time();
+        LSExpression listExpr =
+            localsolver.getModel().getExpression("sequence_" + vehicle.id());
+        LSCollection sequence = listExpr.getCollectionValue();
 
-      int time_matrix_size = sqrt(problem.matrices(vehicle.matrix_index()).time_size());
-      int previous_end = static_cast<int>(vehicle.time_window().start()) | 0;
-      int previous_location_index = vehicle.start_index();
-      for (const auto& service_id : route.service_ids()) {
-        const localsolver_vrp::Service& service =
-            problem.services(IdIndex(service_id, service_ids_map_));
+        int time_matrix_size = sqrt(problem.matrices(vehicle.matrix_index()).time_size());
+        int previous_end = static_cast<int>(vehicle.time_window().start()) | 0;
+        int previous_location_index = vehicle.start_index();
+        for (const auto& service_id : route.service_ids()) {
+          const localsolver_vrp::Service& service =
+              problem.services(IdIndex(service_id, service_ids_map_));
           uint current_arrival =
               previous_end +
-                               timeMatrix.at(previous_location_index * time_matrix_size +
-                                             service.matrix_index()) +
-                               service.setup_duration();
-        int current_start = current_arrival;
-        int current_location_index = service.matrix_index();
-        int tw_index = 0;
+              timeMatrix.at(previous_location_index * time_matrix_size +
+                            service.matrix_index()) +
+              service.setup_duration();
+          int current_start = current_arrival;
+          int current_location_index = service.matrix_index();
+          int tw_index = 0;
           if (service.time_windows_size() == 0) {
             current_start = current_arrival;
           } else {
-        for (const auto& tw : service.time_windows()) {
-          if (current_arrival <= (service.late_multiplier() > 0
-                                      ? tw.end() + tw.maximum_lateness()
-                                      : tw.end())) {
-            current_start = max<uint>(current_arrival, tw.start());
-            used_tw_for_service_map[service_id] = tw;
-            break;
+            for (const auto& tw : service.time_windows()) {
+              if (current_arrival <= (service.late_multiplier() > 0
+                                          ? tw.end() + tw.maximum_lateness()
+                                          : tw.end())) {
+                current_start = max<uint>(current_arrival, tw.start());
+                used_tw_for_service_map[service_id] = tw;
+                break;
+              }
+              tw_index++;
+            }
           }
-          tw_index++;
+          start_time.push_back(current_start);
+          previous_end = current_start + service.duration();
+          previous_location_index = current_location_index;
+          if (service_ids_map_.count(service_id)) {
+            sequence.add(IdIndex(service_id, service_ids_map_));
+            initializedServiceIds.insert(service_id);
+          }
         }
-          }
-        start_time.push_back(current_start);
-        previous_end = current_start + service.duration();
-        previous_location_index = current_location_index;
-        if (service_ids_map_.count(service_id)) {
-        sequence.add(IdIndex(service_id, service_ids_map_));
-        initializedServiceIds.insert(service_id);
-      }
-    }
 
-      localsolver_vrp::Service next_service = problem.services(
-          IdIndex(route.service_ids(start_time.size() - 1), service_ids_map_));
+        localsolver_vrp::Service next_service = problem.services(
+            IdIndex(route.service_ids(start_time.size() - 1), service_ids_map_));
         localsolver_vrp::Service current_service;
-      for (int service_index = start_time.size() - 2; service_index >= 0;
-           service_index--) {
+        for (int service_index = start_time.size() - 2; service_index >= 0;
+             service_index--) {
           current_service = problem.services(
               IdIndex(route.service_ids(service_index), service_ids_map_));
-        int time_between_two_starts =
-            start_time[service_index + 1] - start_time[service_index];
+          int time_between_two_starts =
+              start_time[service_index + 1] - start_time[service_index];
 
           int idle_time =
               time_between_two_starts -
-                        (timeMatrix.at(current_service.matrix_index() * time_matrix_size +
-                                       next_service.matrix_index()) +
-                         current_service.duration() +
-                         (current_service.matrix_index() == next_service.matrix_index()
-                              ? 0
-                              : next_service.setup_duration()));
+              (timeMatrix.at(current_service.matrix_index() * time_matrix_size +
+                             next_service.matrix_index()) +
+               current_service.duration() +
+               (current_service.matrix_index() == next_service.matrix_index()
+                    ? 0
+                    : next_service.setup_duration()));
           const localsolver_vrp::TimeWindow& tw_used =
               used_tw_for_service_map.find(current_service.id())->second;
           if (idle_time > 0) {
@@ -561,13 +561,13 @@ public:
             } else {
               // cout << current_service.id()
               //      << " initial start time : " << start_time[service_index] << endl;
-            start_time[service_index] +=
-                min<int>(idle_time, tw_used.end() +
-                                        (current_service.late_multiplier() > 0
-                                             ? tw_used.maximum_lateness()
-                                             : 0) -
-                                        start_time[service_index]);
-            cout << " mooved start time : " << start_time[service_index] << endl;
+              start_time[service_index] +=
+                  min<int>(idle_time, tw_used.end() +
+                                          (current_service.late_multiplier() > 0
+                                               ? tw_used.maximum_lateness()
+                                               : 0) -
+                                          start_time[service_index]);
+              cout << " mooved start time : " << start_time[service_index] << endl;
             }
           }
           next_service = current_service;
@@ -604,14 +604,14 @@ public:
     result->clear_routes();
 
     for (int route_index = 0; route_index < problem.vehicles_size(); route_index++) {
-        LSArray beginTimeArray = beginTime[route_index].getArrayValue();
-        LSArray endTimeArray = endTime[route_index].getArrayValue();
-        LSArray latenessServicesOfVehicleArray =
-            latenessOfServicesOfVehicle[route_index].getArrayValue();
-        LSArray timeToWareHouseArray =
-            timesToWarehouses[problem.vehicles(route_index).matrix_index()]
-                             [problem.vehicles(route_index).end_index()]
-                                 .getArrayValue();
+      LSArray beginTimeArray = beginTime[route_index].getArrayValue();
+      LSArray endTimeArray = endTime[route_index].getArrayValue();
+      LSArray latenessServicesOfVehicleArray =
+          latenessOfServicesOfVehicle[route_index].getArrayValue();
+      LSArray timeToWareHouseArray =
+          timesToWarehouses[problem.vehicles(route_index).matrix_index()]
+                           [problem.vehicles(route_index).end_index()]
+                               .getArrayValue();
       LSCollection servicesCollection =
           servicesSequence[route_index].getCollectionValue();
       LSArray restBeginTimeArray = Rest[route_index].getArrayValue();
@@ -1102,23 +1102,23 @@ public:
       LSExpression endSelector;
       if (vehicle.rests_size() == 0) {
         endSelector = model.createLambdaFunction([&](LSExpression i, LSExpression prev) {
-            return nextStart(
-                       sequenceVehicle[i],
-                       model.iif(
-                           i == 0,
-                           startTimeVehicle[k] +
-                               timesFromWarehouses[vehicle.matrix_index()]
-                                                  [vehicle.start_index()]
-                                                  [sequenceVehicle[i]] +
-                               serviceSetUpDuration[sequenceVehicle[i]],
-                           prev +
-                               model.at(timeMatrices[vehicle.matrix_index()],
-                                        sequenceVehicle[i - 1], sequenceVehicle[i]) +
-                               model.iif(serviceMatrixIndex[sequenceVehicle[i]] ==
-                                             serviceMatrixIndex[sequenceVehicle[i - 1]],
-                                         0, serviceSetUpDuration[sequenceVehicle[i]]))) +
-                   serviceTime[sequenceVehicle[i]];
-          });
+          return nextStart(
+                     sequenceVehicle[i],
+                     model.iif(
+                         i == 0,
+                         startTimeVehicle[k] +
+                             timesFromWarehouses[vehicle.matrix_index()]
+                                                [vehicle.start_index()]
+                                                [sequenceVehicle[i]] +
+                             serviceSetUpDuration[sequenceVehicle[i]],
+                         prev +
+                             model.at(timeMatrices[vehicle.matrix_index()],
+                                      sequenceVehicle[i - 1], sequenceVehicle[i]) +
+                             model.iif(serviceMatrixIndex[sequenceVehicle[i]] ==
+                                           serviceMatrixIndex[sequenceVehicle[i - 1]],
+                                       0, serviceSetUpDuration[sequenceVehicle[i]]))) +
+                 serviceTime[sequenceVehicle[i]];
+        });
       } else {
         endSelector = model.createLambdaFunction([&](LSExpression i, LSExpression prev) {
           LSExpression tmp = travelAndSetupEndWithPause(
@@ -1177,24 +1177,27 @@ public:
 
       routeDuration[k] =
           model.iif(c > 0,
-                    endTime[k][c - 1] +
+                    endTime[k][c - 1] + pauseAfterLastService +
                         timesToWarehouses[vehicle.matrix_index()][vehicle.end_index()]
                                          [sequenceVehicle[c - 1]] -
                         startTimeVehicle[k],
                     0);
-      routeDurationCost[k] =
-          (routeDuration[k] -
-           model.iif(vehicle.free_approach(),
-                     timesFromWarehouses[vehicle.matrix_index()][vehicle.start_index()]
-                                        [sequenceVehicle[0]],
-                     0) -
-           model.iif(vehicle.free_return(),
-                     timesToWarehouses[vehicle.matrix_index()][vehicle.end_index()]
-                                      [sequenceVehicle[c - 1]],
-                     0)) *
-          vehicle.cost_time_multiplier();
 
-      // routeDurationCost[k] = routeDuration[k] * vehicle.cost_time_multiplier();
+      routeDurationCost[k] = model.iif(
+          c > 0,
+          ((routeDuration[k] -
+            model.iif(vehicle.free_approach(),
+                      timesFromWarehouses[vehicle.matrix_index()][vehicle.start_index()]
+                                         [sequenceVehicle[0]],
+                      0) -
+            model.iif(vehicle.free_return(),
+                      timesToWarehouses[vehicle.matrix_index()][vehicle.end_index()]
+                                       [sequenceVehicle[c - 1]],
+                      0))) *
+              vehicle.cost_time_multiplier(),
+          0);
+
+      routeDurationCost[k].setName("routeDurationCost" + to_string(k));
 
       timesToWarehouses[vehicle.matrix_index()][vehicle.end_index()].setName(
           "timesToWarehouses of vehicle" + to_string(k));
@@ -1215,7 +1218,7 @@ public:
           LSExpression twEndsVehicleConstraintWithCostLateMultiplier = model.iif(
               c > 0,
               endTime[k][c - 1] +
-                  timesToWarehouses[vehicle.matrix_index()][vehicle.end_index()]
+                      timesToWarehouses[vehicle.matrix_index()][vehicle.end_index()]
                                        [sequenceVehicle[c - 1]] <=
                   static_cast<lsint>(vehicle.time_window().end() +
                                      vehicle.time_window().maximum_lateness()),
