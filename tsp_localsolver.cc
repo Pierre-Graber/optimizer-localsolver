@@ -382,35 +382,55 @@ public:
     return "not found";
   }
 
-  void setInitialSolution(vector<LSExpression> serviceSequences) {
+  void setInitialSolution(vector<LSExpression>& serviceSequences) {
     if (FLAGS_only_first_solution) {
-      int route_index = 0;
       for (auto const& route : problem.routes()) {
-        LSExpression sequenceVehicle = serviceSequences[route_index];
-        for (int service_index = 0; service_index < route.service_ids_size() - 1;
-             service_index++) {
+        cout << "route.vehicle_id " << route.vehicle_id() << " service_ids_size "
+             << route.service_ids_size() << endl;
+        int vehicle_index = IdIndex(route.vehicle_id(), vehicle_ids_map_);
+        LSExpression sequenceVehicle = serviceSequences[vehicle_index];
+        // cout << "service_id :" << route.service_ids(0) << endl;
+        for (int index_of_service_in_route = 0;
+             index_of_service_in_route < route.service_ids_size() - 1;
+             index_of_service_in_route++) {
+          // cout << "service_id :" << route.service_ids(index_of_service_in_route + 1)
+          //      << endl;
+          // lsint service = static_cast<lsint>(
+          //     IdIndex(route.service_ids(index_of_service_in_route),
+          //     service_ids_map_));
+          // model.constraint(model.contains(sequenceVehicle, service));
+          // model.constraint(model.indexOf(sequenceVehicle, service) ==
+          //                  index_of_service_in_route);
+
           LSExpression sequenceContainsCurrentService = model.contains(
-              sequenceVehicle, static_cast<lsint>(IdIndex(
-                                   route.service_ids(service_index), service_ids_map_)));
+              sequenceVehicle,
+              static_cast<lsint>(IdIndex(route.service_ids(index_of_service_in_route),
+                                         service_ids_map_)));
           LSExpression sequenceContainsNextService = model.contains(
               sequenceVehicle,
-              static_cast<lsint>(
-                  IdIndex(route.service_ids(service_index + 1), service_ids_map_)));
-          LSExpression currentServiceIndexInSequence = model.indexOf(
-              sequenceVehicle, static_cast<lsint>(IdIndex(
-                                   route.service_ids(service_index), service_ids_map_)));
-          LSExpression nextServiceIndexInSequence =
-              model.indexOf(sequenceVehicle,
-                            static_cast<lsint>(IdIndex(
-                                route.service_ids(service_index + 1), service_ids_map_)));
+              static_cast<lsint>(IdIndex(route.service_ids(index_of_service_in_route + 1),
+                                         service_ids_map_)));
+          LSExpression indexOfCurrentServiceInSequence = model.indexOf(
+              sequenceVehicle,
+              static_cast<lsint>(IdIndex(route.service_ids(index_of_service_in_route),
+                                         service_ids_map_)));
+          LSExpression indexOfNextServiceInSequence = model.indexOf(
+              sequenceVehicle,
+              static_cast<lsint>(IdIndex(route.service_ids(index_of_service_in_route + 1),
+                                         service_ids_map_)));
           model.constraint(sequenceContainsCurrentService == sequenceContainsNextService);
           model.constraint(model.iif(
               sequenceContainsCurrentService,
-              currentServiceIndexInSequence + 1 == nextServiceIndexInSequence, true));
+              indexOfCurrentServiceInSequence + 1 == indexOfNextServiceInSequence, true));
+
+          // model.constraint(sequenceContainsCurrentService);
+          // model.constraint(sequenceContainsNextService);
+          // model.constraint(indexOfCurrentServiceInSequence + 1 ==
+          //                  indexOfNextServiceInSequence);
         }
-        route_index++;
       }
     }
+
     model.close();
     LSSolution sol = localsolver.getSolution();
     std::unordered_set<string> initializedServiceIds;
@@ -490,16 +510,13 @@ public:
         if (idle_time > 0) {
           const localsolver_vrp::TimeWindow& tw_used =
               used_tw_for_service_map.find(current_service.id())->second;
+          if (idle_time > 0) {
             if (used_tw_for_service_map.find(current_service.id()) ==
                 used_tw_for_service_map.end()) {
               start_time[service_index] += idle_time;
             } else {
-            cout << " tw_used : "
-                 << " start : " << tw_used.start() << ", end :" << tw_used.end()
-                 << ", absolute_end :" << tw_used.end() + tw_used.maximum_lateness()
-                 << endl;
-            cout << current_service.id()
-                 << " initial start time : " << start_time[service_index] << endl;
+              // cout << current_service.id()
+              //      << " initial start time : " << start_time[service_index] << endl;
             start_time[service_index] +=
                 min<int>(idle_time, tw_used.end() +
                                         (current_service.late_multiplier() > 0
