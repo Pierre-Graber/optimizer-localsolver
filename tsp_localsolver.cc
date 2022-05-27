@@ -163,6 +163,7 @@ public:
   vector<LSExpression> routeDistanceCost;
   vector<LSExpression> routeFixedCost;
   vector<LSExpression> endTime;
+  vector<LSExpression> endTimeWithRest;
   vector<LSExpression> beginTime;
   vector<LSExpression> arrivalTime;
   vector<LSExpression> waitingTime;
@@ -170,8 +171,11 @@ public:
   vector<LSExpression> latenessCost;
   vector<LSExpression> latenessOfServicesOfVehicle;
   vector<LSExpression> excessLateness;
+  vector<LSExpression> Rest;
+  vector<LSExpression> restDuration;
   vector<int> allVehicleIndices;
   map<string, int64> vehicle_ids_map_;
+  vector<map<string, int64>> rest_ids_map;
 
   // Time Leaving The Warehouse
   vector<LSExpression> timeLeavingTheWarehouse;
@@ -384,6 +388,69 @@ public:
     return "not found";
   }
 
+  LSExpression needsPause(LSExpression restStart, LSExpression start, LSExpression end) {
+    return start <= restStart && end >= restStart;
+  }
+
+  LSExpression travelAndSetupEndWithPause(localsolver_vrp::Vehicle vehicle,
+                                          LSExpression i, LSExpression time,
+                                          vector<LSExpression> serviceSequences) {
+    int k = IdIndex(vehicle.id(), vehicle_ids_map_);
+    LSExpression sequenceVehicle = serviceSequences[k];
+    LSExpression travelAndSetupDuration =
+        model.iif(i == 0,
+                  timesFromWarehouses[vehicle.matrix_index()][vehicle.start_index()]
+                                     [sequenceVehicle[0]] +
+                      serviceSetUpDuration[sequenceVehicle[0]],
+                  model.at(timeMatrices[vehicle.matrix_index()], sequenceVehicle[i - 1],
+                           sequenceVehicle[i]) +
+                      model.iif(serviceMatrixIndex[sequenceVehicle[i]] ==
+                                    serviceMatrixIndex[sequenceVehicle[i - 1]],
+                                0, serviceSetUpDuration[i]));
+    LSExpression travelAndSetupEnd = time + travelAndSetupDuration;
+    LSExpression extraPauseDurationSelector =
+        model.createLambdaFunction([&](LSExpression rest_index) {
+          return model.iif(needsPause(Rest[k][rest_index], time, travelAndSetupEnd),
+                           restDuration[k][rest_index], 0);
+        });
+    LSExpression extraPauseDuration =
+        model.sum(model.range(0, vehicle.rests_size()), extraPauseDurationSelector);
+    return travelAndSetupEnd + extraPauseDuration;
+  }
+
+  LSExpression serviceEndWithPause(localsolver_vrp::Vehicle vehicle, LSExpression service,
+                                   LSExpression time) {
+    LSExpression nextStartWithoutPause = nextStart(service, time);
+    LSExpression endWithoutPause = nextStartWithoutPause + serviceTime[service];
+    LSExpression firstPauseselector =
+        model.createLambdaFunction([&](LSExpression rest_index) {
+          return model.iif(
+              needsPause(
+                  model.at(Rest[IdIndex(vehicle.id(), vehicle_ids_map_)], rest_index),
+                  time, endWithoutPause),
+              model.at(Rest[IdIndex(vehicle.id(), vehicle_ids_map_)], rest_index),
+              static_cast<lsint>(CUSTOM_MAX_INT));
+        });
+    LSExpression restIndexSelector =
+        model.createLambdaFunction([&](LSExpression rest_index) {
+          return model.iif(
+              needsPause(
+                  model.at(Rest[IdIndex(vehicle.id(), vehicle_ids_map_)], rest_index),
+                  time, endWithoutPause),
+              rest_index, 0);
+        });
+    LSExpression firstPause =
+        model.min(model.range(0, vehicle.rests_size()), firstPauseselector);
+    LSExpression rest_index =
+        model.max(model.range(0, vehicle.rests_size()), restIndexSelector);
+    LSExpression nextStartWithPause = nextStart(
+        service,
+        firstPause + restDuration[IdIndex(vehicle.id(), vehicle_ids_map_)][rest_index]);
+    LSExpression endWithPause = nextStartWithPause + serviceTime[service];
+    return model.iif(firstPause == static_cast<lsint>(CUSTOM_MAX_INT), endWithoutPause,
+                     endWithPause);
+  }
+
   void setInitialSolution(vector<LSExpression>& serviceSequences) {
     if (FLAGS_only_first_solution) {
       for (auto const& route : problem.routes()) {
@@ -572,6 +639,8 @@ public:
                                  .getArrayValue();
       LSCollection servicesCollection =
           servicesSequence[route_index].getCollectionValue();
+      LSArray restBeginTimeArray = Rest[route_index].getArrayValue();
+      LSArray restDurationArray = restDuration[route_index].getArrayValue();
 
       if (vehicleUsed[route_index].getValue() == 1) {
         localsolver_result::Route* route = result->add_routes();
@@ -581,9 +650,20 @@ public:
           start_route->set_index(-1);
           start_route->set_start_time(startTimeVehicle[route_index].getIntValue());
         }
-
+        int currentRestIndex = 0;
         for (int activity_index = 0; activity_index < servicesCollection.count();
              activity_index++) {
+          if (problem.vehicles(route_index).rests_size() > 0) {
+            while (restBeginTimeArray.count() > currentRestIndex &&
+                   beginTimeArray.getIntValue(activity_index) >=
+                       restBeginTimeArray.getIntValue(currentRestIndex)) {
+              localsolver_result::Activity* rest = route->add_activities();
+              rest->set_type("break");
+              rest->set_start_time(restBeginTimeArray.getIntValue(currentRestIndex));
+              rest->set_id(IndexId(currentRestIndex, rest_ids_map[route_index]));
+              currentRestIndex++;
+            }
+          }
           localsolver_result::Activity* activity = route->add_activities();
           activity->set_type("service");
           activity->set_id(IndexId(servicesCollection[activity_index], service_ids_map_));
@@ -599,6 +679,17 @@ public:
             quantity_index++;
           }
         }
+        if (problem.vehicles(route_index).rests_size() > 0) {
+          if (restBeginTimeArray.count() > currentRestIndex) {
+            while (currentRestIndex < restBeginTimeArray.count()) {
+              localsolver_result::Activity* rest = route->add_activities();
+              rest->set_type("break");
+              rest->set_start_time(restBeginTimeArray.getIntValue(currentRestIndex));
+              rest->set_id(IndexId(currentRestIndex, rest_ids_map[route_index]));
+              currentRestIndex++;
+            }
+          }
+        }
         auto route_costs = route->mutable_cost_details();
         // route_costs->set_time(routeDuration[route_index].getValue());
         route_costs->set_fixed(problem.vehicles(route_index).cost_fixed());
@@ -611,7 +702,9 @@ public:
           end_route->set_type("end");
           end_route->set_index(-1);
           end_route->set_start_time(
-              endTimeArray.getIntValue(servicesCollection.count() - 1) +
+              max(endTimeArray.getIntValue(servicesCollection.count() - 1),
+                  restBeginTimeArray.getIntValue(restBeginTimeArray.count() - 1) +
+                      restDurationArray.getIntValue(restDurationArray.count() - 1)) +
               timeToWareHouseArray.getIntValue(
                   servicesCollection[servicesCollection.count() - 1]));
         }
@@ -656,6 +749,7 @@ public:
       , routeDistanceCost(problem.vehicles_size())
       , routeFixedCost(problem.vehicles_size())
       , endTime(problem.vehicles_size())
+      , endTimeWithRest(problem.vehicles_size())
       , beginTime(problem.vehicles_size())
       , arrivalTime(problem.vehicles_size())
       , waitingTime(problem.vehicles_size())
@@ -663,6 +757,9 @@ public:
       , latenessCost(problem.vehicles_size())
       , latenessOfServicesOfVehicle(problem.vehicles_size())
       , excessLateness(problem.vehicles_size())
+      , Rest(problem.vehicles_size(), model.array())
+      , restDuration(problem.vehicles_size(), model.array())
+      , rest_ids_map(problem.vehicles_size())
       , timeLeavingTheWarehouse(problem.vehicles_size()) {
     for (const auto& matrix : problem.matrices()) {
       MatrixBuilder(timeMatrices, matrix.time());
@@ -678,6 +775,25 @@ public:
     distanceFromWarehouses.resize(problem.matrices_size());
     distanceToWarehouses.resize(problem.matrices_size());
     for (const auto& vehicle : problem.vehicles()) {
+      vector<int> restDurationVec;
+      vector<LSExpression> restVec;
+      if (!vehicle.rests().empty()) {
+        int rest_index = 0;
+        for (auto const& rest : vehicle.rests()) {
+          restVec.push_back(
+              model.intVar(rest.time_window().start(), rest.time_window().end()));
+          restDurationVec.push_back(rest.duration());
+          rest_ids_map[k][(string)rest.id()] = rest_index;
+          rest_index++;
+        }
+      } else {
+        restVec.push_back(
+            model.intVar(vehicle.time_window().start(), vehicle.time_window().start()));
+        restDurationVec.push_back(0);
+      }
+      restDuration[k] = model.array(restDurationVec.begin(), restDurationVec.end());
+      Rest[k] = model.array(restVec.begin(), restVec.end());
+
       int time_matrix_size = sqrt(problem.matrices(vehicle.matrix_index()).time_size());
       int distance_matrix_size =
           sqrt(problem.matrices(vehicle.matrix_index()).distance_size());
@@ -1008,9 +1124,9 @@ public:
                      0)) *
           vehicle.cost_distance_multiplier();
       // End of each visit
-
-      LSExpression endSelector =
-          model.createLambdaFunction([&](LSExpression i, LSExpression prev) {
+      LSExpression endSelector;
+      if (vehicle.rests_size() == 0) {
+        endSelector = model.createLambdaFunction([&](LSExpression i, LSExpression prev) {
             return nextStart(
                        sequenceVehicle[i],
                        model.iif(
@@ -1028,7 +1144,13 @@ public:
                                          0, serviceSetUpDuration[sequenceVehicle[i]]))) +
                    serviceTime[sequenceVehicle[i]];
           });
-
+      } else {
+        endSelector = model.createLambdaFunction([&](LSExpression i, LSExpression prev) {
+          LSExpression tmp = travelAndSetupEndWithPause(
+              vehicle, i, model.iif(i == 0, startTimeVehicle[k], prev), serviceSequences);
+          return serviceEndWithPause(vehicle, i, tmp);
+        });
+      }
       endTime[k] = model.array(model.range(0, c), endSelector);
 
       LSExpression beginTimeSelector = model.createLambdaFunction([&](LSExpression i) {
@@ -1059,6 +1181,24 @@ public:
                                       sequenceVehicle[i - 1], sequenceVehicle[i])));
       });
       waitingTime[k] = model.sum(model.range(0, c), waitingTimeSelector);
+
+      LSExpression endOfVehicleTimeWindow(model.array());
+      endOfVehicleTimeWindow.addOperand(static_cast<lsint>(vehicle.time_window().end()));
+
+      LSExpression pauseAfterLastServiceSelector =
+          model.createLambdaFunction([&](LSExpression rest_index) {
+            return model.iif(
+                needsPause(
+                    Rest[k][rest_index], endTime[k][c - 1],
+                    // endTime[k][c - 1] +
+                    //     timesToWarehouses[vehicle.matrix_index()][vehicle.end_index()]
+                    //                      [sequenceVehicle[c - 1]]
+                    endOfVehicleTimeWindow[0]),
+                restDuration[k][rest_index], 0);
+          });
+
+      LSExpression pauseAfterLastService =
+          model.sum(model.range(0, vehicle.rests_size()), pauseAfterLastServiceSelector);
 
       routeDuration[k] =
           model.iif(c > 0,
