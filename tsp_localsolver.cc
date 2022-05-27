@@ -184,7 +184,8 @@ public:
     LSExpression timeWindowSelector =
         model.createLambdaFunction([&](LSExpression tw_index) {
           return model.iif(model.at(twAbsoluteEndsArray, service, tw_index) >= time &&
-                               model.at(twStartsArray, service, tw_index) <= time,
+                               model.at(twStartsArray, service, tw_index) <= time &&
+                               waitNextTWArray[service] == 0,
                            model.at(twEndsArray, service, tw_index),
                            model.at(twEndsArray, service, nbTwsArray[service] - 1));
         });
@@ -934,7 +935,7 @@ public:
     int s = 0;
     for (const auto& service : problem.services()) {
       serviceMatrixIndexVec.push_back(service.matrix_index());
-      waitNextTWArray.addOperand(model.intVar(0, 0));
+      waitNextTWArray.addOperand(model.boolVar());
       serviceTimeVec.push_back(service.duration());
       serviceLateMultiplierVec.push_back(service.late_multiplier());
       serviceSetUpDurationVec.push_back(service.setup_duration());
