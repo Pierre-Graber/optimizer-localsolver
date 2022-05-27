@@ -1378,11 +1378,6 @@ void readData(localsolver_vrp::Problem& problem) {
     // vehicle.cost_waiting_time_multiplier()
     //      << endl;
     // cout << "cost time multiplier : " << vehicle.cost_time_multiplier() << endl;
-    if (!(equals(vehicle.cost_waiting_time_multiplier(),
-                 vehicle.cost_time_multiplier())) &&
-        !(equals(vehicle.cost_waiting_time_multiplier(), 0))) {
-      throw std::invalid_argument(" cost_waiting_time_multiplier is not implemented yet");
-    }
     if (vehicle.max_ride_distance()) {
       throw std::invalid_argument(" ERROR ======================= "
                                   " Max ride distance is not implemented yet");
@@ -1398,10 +1393,10 @@ void readData(localsolver_vrp::Problem& problem) {
       throw std::invalid_argument(" ERROR ======================= "
                                   "cost_value_multiplier is not implemented yet");
     }
-    if (vehicle.free_approach()) {
-      throw std::invalid_argument(" ERROR ======================= "
-                                  "free_approach is not implemented yet");
-    }
+    // if (vehicle.rests_size() > 0) {
+    //   throw std::invalid_argument(" ERROR ======================= "
+    //                               "rests are not implemented yet");
+    // }
     if ((!vehicle.shift_preference().empty()) &&
         (vehicle.shift_preference() != "minimize_span" &&
          vehicle.shift_preference() != "force_start")) {
