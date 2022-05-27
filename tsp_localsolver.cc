@@ -935,7 +935,7 @@ public:
       serviceQuantitiesMatrix.addOperand(
           model.array(serviceQuantitiesVec[s].begin(), serviceQuantitiesVec[s].end()));
       if (service.exclusion_cost() > 0) {
-        serviceExclusionCostVec.push_back(service.exclusion_cost());
+        serviceExclusionCostVec.push_back(service.exclusion_cost() * CUSTOM_BIGNUM_COST);
       } else {
         serviceExclusionCostVec.push_back(1e6);
       }
