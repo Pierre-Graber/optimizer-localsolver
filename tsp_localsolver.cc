@@ -32,6 +32,8 @@
 
 #define CUSTOM_MAX_INT (int64) std::pow(2, 30)
 
+#define CUSTOM_BIGNUM_COST 1e6
+
 DEFINE_string(solution_file, "", "solution file name ");
 DEFINE_string(instance_file, "", "instance file name or data");
 
