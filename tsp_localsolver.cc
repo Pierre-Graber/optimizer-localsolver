@@ -1096,6 +1096,8 @@ public:
                                          [sequenceVehicle[c - 1]],
                      0)) *
           vehicle.cost_distance_multiplier();
+      routeDistanceCost[k].setName("routeDistanceCost" + to_string(k));
+
       // End of each visit
       LSExpression endSelector;
       if (vehicle.rests_size() == 0) {
