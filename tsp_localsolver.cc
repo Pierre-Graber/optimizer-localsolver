@@ -1259,6 +1259,15 @@ public:
 
         cout << " Vehicle Time Window Start :  " << vehicle.time_window().start() << endl;
         cout << " Vehicle Time Window Ends  :  " << vehicle.time_window().end() << endl;
+
+        cout << "Vehicles Rests : "
+             << Rest[IdIndex(vehicle.id(), vehicle_ids_map_)].getArrayValue().toString()
+             << endl;
+        cout << "Vehicles Rests Duration : "
+             << restDuration[IdIndex(vehicle.id(), vehicle_ids_map_)]
+                    .getArrayValue()
+                    .toString()
+             << endl;
       }
 
       cout << "number of time windows " << nbTwsArray.getArrayValue().toString() << endl;
