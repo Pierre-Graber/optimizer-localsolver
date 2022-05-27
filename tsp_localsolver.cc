@@ -1210,12 +1210,14 @@ public:
 
       if (vehicle.has_time_window() && vehicle.time_window().end() < CUSTOM_MAX_INT) {
         if (vehicle.cost_late_multiplier() > 0) {
-          LSExpression twEndsVehicleConstraintWithCostLateMultiplier =
-              routeDuration[k] <=
-              static_cast<lsint>(vehicle.time_window().end() +
-                                 vehicle.time_window().maximum_lateness()) +
+          LSExpression twEndsVehicleConstraintWithCostLateMultiplier = model.iif(
+              c > 0,
+              endTime[k][c - 1] +
                   timesToWarehouses[vehicle.matrix_index()][vehicle.end_index()]
-                                   [sequenceVehicle[c - 1]];
+                                       [sequenceVehicle[c - 1]] <=
+                  static_cast<lsint>(vehicle.time_window().end() +
+                                     vehicle.time_window().maximum_lateness()),
+              true);
           twEndsVehicleConstraintWithCostLateMultiplier.setName(
               "vehicle " + to_string(k) +
               "ending time window constraints with cost late multiplier");
