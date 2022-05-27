@@ -439,19 +439,12 @@ public:
   void setInitialSolution(vector<LSExpression>& serviceSequences) {
     if (FLAGS_only_first_solution) {
       for (auto const& route : problem.routes()) {
-        cout << "route.vehicle_id " << route.vehicle_id() << " service_ids_size "
-             << route.service_ids_size() << endl;
         int vehicle_index = IdIndex(route.vehicle_id(), vehicle_ids_map_);
         LSExpression sequenceVehicle = serviceSequences[vehicle_index];
         // cout << "service_id :" << route.service_ids(0) << endl;
         for (int index_of_service_in_route = 0;
              index_of_service_in_route < route.service_ids_size() - 1;
              index_of_service_in_route++) {
-          // cout << "service_id :" << route.service_ids(index_of_service_in_route + 1)
-          //      << endl;
-          // lsint service = static_cast<lsint>(
-          //     IdIndex(route.service_ids(index_of_service_in_route),
-          //     service_ids_map_));
           // model.constraint(model.contains(sequenceVehicle, service));
           // model.constraint(model.indexOf(sequenceVehicle, service) ==
           //                  index_of_service_in_route);
@@ -507,7 +500,6 @@ public:
       int time_matrix_size = sqrt(problem.matrices(vehicle.matrix_index()).time_size());
       int previous_end = static_cast<int>(vehicle.time_window().start()) | 0;
       int previous_location_index = vehicle.start_index();
-        int index_service = 0;
       for (const auto& service_id : route.service_ids()) {
         const localsolver_vrp::Service& service =
             problem.services(IdIndex(service_id, service_ids_map_));
@@ -540,7 +532,6 @@ public:
         sequence.add(IdIndex(service_id, service_ids_map_));
         initializedServiceIds.insert(service_id);
       }
-          index_service++;
     }
 
       localsolver_vrp::Service next_service = problem.services(
@@ -561,7 +552,6 @@ public:
                          (current_service.matrix_index() == next_service.matrix_index()
                               ? 0
                               : next_service.setup_duration()));
-        if (idle_time > 0) {
           const localsolver_vrp::TimeWindow& tw_used =
               used_tw_for_service_map.find(current_service.id())->second;
           if (idle_time > 0) {
@@ -658,7 +648,7 @@ public:
           activity->set_lateness(
               latenessServicesOfVehicleArray.getDoubleValue(activity_index));
           int quantity_index = 0;
-          for (auto const& quantity :
+          for (const auto& quantity :
                problem.services(servicesCollection[activity_index]).quantities()) {
             activity->add_quantities(quantity);
             quantity_index++;
@@ -676,11 +666,9 @@ public:
           }
         }
         auto route_costs = route->mutable_cost_details();
-        // route_costs->set_time(routeDuration[route_index].getValue());
         route_costs->set_fixed(problem.vehicles(route_index).cost_fixed());
         route_costs->set_distance(routeDistanceCost[route_index].getDoubleValue());
         route_costs->set_time(routeDurationCost[route_index].getDoubleValue());
-        // route_costs->set_distance(routeDistance[route_index].getValue());
         route_costs->set_lateness(latenessCost[route_index].getDoubleValue());
         if (problem.vehicles(route_index).end_index() != -1) {
           localsolver_result::Activity* end_route = route->add_activities();
