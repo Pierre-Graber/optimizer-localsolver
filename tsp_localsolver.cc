@@ -1346,8 +1346,29 @@ public:
     //   cout << "waiting time before start" << problem.vehicles(v).id() << " "
     //        << timeLeavingTheWarehouse[v].getValue() << endl;
     // }
+    if (vehiclesUsed[problem.vehicles_size()].getValue() == 0) {
+      cout << "No unassigned service" << endl;
+    } else {
+      cout << "unassigned service(s) : ";
+      LSCollection servicesCollection =
+          serviceSequences[problem.vehicles_size()].getCollectionValue();
+      for (lsint i = 0; i < servicesCollection.count(); i++) {
+        cout << IndexId(servicesCollection[i], service_ids_map_) << " ";
+      }
+      cout << endl;
+    }
 
-    if (problem.services_size() < 20) {
+    for (int v = 0; v < problem.vehicles_size(); v++) {
+      if (vehiclesUsed[v].getValue() != 1)
+        continue;
+      cout << "assigned service(s) to " << problem.vehicles(v).id() << " : ";
+      LSCollection servicesCollection = serviceSequences[v].getCollectionValue();
+      for (lsint i = 0; i < servicesCollection.count(); i++) {
+        cout << IndexId(servicesCollection[i], service_ids_map_) << " ";
+      }
+      cout << endl;
+    }
+    if (problem.services_size() < 20 && false) {
       for (int service_index = 0; service_index < problem.services_size();
            service_index++) {
         cout << " late multiplier of service " + to_string(service_index)
