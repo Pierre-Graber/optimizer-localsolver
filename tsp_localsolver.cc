@@ -606,6 +606,7 @@ public:
     result->clear_routes();
 
     for (int route_index = 0; route_index < problem.vehicles_size(); route_index++) {
+      if (vehicleUsed[route_index].getValue() == 1) {
       LSArray beginTimeArray = beginTime[route_index].getArrayValue();
       LSArray endTimeArray = endTime[route_index].getArrayValue();
       LSArray latenessServicesOfVehicleArray =
@@ -618,8 +619,6 @@ public:
           servicesSequence[route_index].getCollectionValue();
       LSArray restBeginTimeArray = Rest[route_index].getArrayValue();
       LSArray restDurationArray = restDuration[route_index].getArrayValue();
-
-      if (vehicleUsed[route_index].getValue() == 1) {
         localsolver_result::Route* route = result->add_routes();
         if (problem.vehicles(route_index).start_index() != -1) {
           localsolver_result::Activity* start_route = route->add_activities();
@@ -649,11 +648,9 @@ public:
           activity->set_start_time(beginTimeArray.getIntValue(activity_index));
           activity->set_lateness(
               latenessServicesOfVehicleArray.getDoubleValue(activity_index));
-          int quantity_index = 0;
-          for (const auto& quantity :
+          for (auto const& quantity :
                problem.services(servicesCollection[activity_index]).quantities()) {
             activity->add_quantities(quantity);
-            quantity_index++;
           }
         }
         if (problem.vehicles(route_index).rests_size() > 0) {
@@ -685,18 +682,18 @@ public:
         }
       } else {
         localsolver_result::Route* route = result->add_routes();
-        if (problem.vehicles(route_index).start_index() != -1) {
+        // if (problem.vehicles(route_index).start_index() != -1) {
           localsolver_result::Activity* start_route = route->add_activities();
           start_route->set_type("start");
           start_route->set_index(-1);
           start_route->set_start_time(startTimeVehicle[route_index].getIntValue());
-        }
-        if (problem.vehicles(route_index).end_index() != -1) {
+        // }
+        // if (problem.vehicles(route_index).end_index() != -1) {
           localsolver_result::Activity* end_route = route->add_activities();
           end_route->set_type("end");
           end_route->set_index(-1);
-          end_route->set_start_time(startTimeVehicle[route_index].getIntValue());
-        }
+        end_route->set_start_time(endTimeVehicle[route_index].getIntValue());
+        // }
       }
     }
     result->set_duration(runningTime);
