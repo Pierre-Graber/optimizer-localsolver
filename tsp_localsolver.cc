@@ -1094,7 +1094,12 @@ public:
                         distanceToWarehouses[vehicle.matrix_index()][vehicle.end_index()]
                                             [sequenceVehicle[c - 1]],
                     0);
-      routeDistanceCost[k] =
+
+      distanceToWarehouses[vehicle.matrix_index()][vehicle.end_index()].setName(
+          "distanceToWarehouses" + to_string(k));
+      distanceFromWarehouses[vehicle.matrix_index()][vehicle.start_index()].setName(
+          "distanceFromWarehouses" + to_string(k));
+      routeDistance[k].setName("routeDistance" + to_string(k));
           (routeDistance[k] -
            model.iif(vehicle.free_approach(),
                      distanceFromWarehouses[vehicle.matrix_index()][vehicle.start_index()]
@@ -1166,10 +1171,7 @@ public:
                                       sequenceVehicle[i - 1], sequenceVehicle[i])));
       });
       waitingTime[k] = model.sum(model.range(0, c), waitingTimeSelector);
-
-      LSExpression endOfVehicleTimeWindow(model.array());
-      endOfVehicleTimeWindow.addOperand(static_cast<lsint>(vehicle.time_window().end()));
-
+      waitingTime[k].setName("waitingTime" + problem.vehicles(k).id());
       LSExpression pauseAfterLastServiceSelector =
           model.createLambdaFunction([&](LSExpression rest_index) {
             return model.iif(needsPause(Rest[k][rest_index], endTime[k][c - 1],
@@ -1211,6 +1213,7 @@ public:
         routeDuration[k] = endTimeVehicle[k] - startTimeVehicle[k];
       }
 
+      routeDuration[k].setName("routeDuration" + to_string(k));
       routeDurationCost[k] = model.iif(
           c > 0,
           ((routeDuration[k] -
