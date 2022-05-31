@@ -694,7 +694,7 @@ public:
           localsolver_result::Activity* end_route = route->add_activities();
           end_route->set_type("end");
           end_route->set_index(-1);
-        end_route->set_start_time(endTimeVehicle[route_index].getIntValue());
+        end_route->set_start_time(startTimeVehicle[route_index].getIntValue());
         // }
       }
     }
