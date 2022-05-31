@@ -159,6 +159,7 @@ public:
   LSExpression waitNextTWArray;
 
   vector<LSExpression> startTimeVehicle;
+  vector<LSExpression> endTimeVehicle;
   vector<LSExpression> routeDuration;
   vector<LSExpression> routeDurationCost;
   vector<LSExpression> routeDistance;
@@ -170,6 +171,7 @@ public:
   vector<LSExpression> arrivalTime;
   vector<LSExpression> waitingTime;
   vector<LSExpression> serviceStartsInTW;
+  vector<LSExpression> latenessOfVehicle;
   vector<LSExpression> latenessCost;
   vector<LSExpression> latenessOfServicesOfVehicle;
   vector<LSExpression> excessLateness;
@@ -678,12 +680,7 @@ public:
           localsolver_result::Activity* end_route = route->add_activities();
           end_route->set_type("end");
           end_route->set_index(-1);
-          end_route->set_start_time(
-              max(endTimeArray.getIntValue(servicesCollection.count() - 1),
-                  restBeginTimeArray.getIntValue(restBeginTimeArray.count() - 1) +
-                      restDurationArray.getIntValue(restDurationArray.count() - 1)) +
-              timeToWareHouseArray.getIntValue(
-                  servicesCollection[servicesCollection.count() - 1]));
+          end_route->set_start_time(endTimeVehicle[route_index].getIntValue());
         }
       } else {
         localsolver_result::Route* route = result->add_routes();
@@ -721,6 +718,7 @@ public:
       , twAbsoluteEndsArray(model.array())
       , waitNextTWArray(model.array())
       , startTimeVehicle(problem.vehicles_size())
+      , endTimeVehicle(problem.vehicles_size())
       , routeDuration(problem.vehicles_size())
       , routeDurationCost(problem.vehicles_size())
       , routeDistance(problem.vehicles_size())
@@ -732,6 +730,7 @@ public:
       , arrivalTime(problem.vehicles_size())
       , waitingTime(problem.vehicles_size())
       , serviceStartsInTW(problem.vehicles_size())
+      , latenessOfVehicle(problem.vehicles_size())
       , latenessCost(problem.vehicles_size())
       , latenessOfServicesOfVehicle(problem.vehicles_size())
       , excessLateness(problem.vehicles_size())
@@ -1136,6 +1135,7 @@ public:
         });
       }
       endTime[k] = model.array(model.range(0, c), endSelector);
+      endTime[k].setName("endTime_" + problem.vehicles(k).id());
 
       LSExpression beginTimeSelector = model.createLambdaFunction([&](LSExpression i) {
         return endTime[k][i] - serviceTime[sequenceVehicle[i]];
@@ -1176,16 +1176,39 @@ public:
                 restDuration[k][rest_index], 0);
           });
 
-      LSExpression pauseAfterLastService =
-          model.sum(model.range(0, vehicle.rests_size()), pauseAfterLastServiceSelector);
+      LSExpression pauseAfterLastService = model.iif(
+          vehicle.rests_size() > 0,
+          model.sum(model.range(0, vehicle.rests_size()), pauseAfterLastServiceSelector),
+          0);
+      if (vehicle.rests_size() > 0) {
+        endTimeVehicle[k] = model.iif(
+            c > 0,
+            model.max(endTime[k][c - 1] + pauseAfterLastService +
+                          timesToWarehouses[vehicle.matrix_index()][vehicle.end_index()]
+                                           [sequenceVehicle[c - 1]],
+                      Rest[k][vehicle.rests_size() - 1] +
+                          restDuration[k][vehicle.rests_size() - 1]),
+            0);
+      } else {
+        endTimeVehicle[k] =
+            model.iif(c > 0,
+                      endTime[k][c - 1] + pauseAfterLastService +
+                          timesToWarehouses[vehicle.matrix_index()][vehicle.end_index()]
+                                           [sequenceVehicle[c - 1]],
+                      0);
+      }
 
+      if (vehicle.rests_size() == 0) {
       routeDuration[k] =
           model.iif(c > 0,
-                    endTime[k][c - 1] + pauseAfterLastService +
+                      endTime[k][c - 1] +
                         timesToWarehouses[vehicle.matrix_index()][vehicle.end_index()]
                                          [sequenceVehicle[c - 1]] -
                         startTimeVehicle[k],
                     0);
+      } else {
+        routeDuration[k] = endTimeVehicle[k] - startTimeVehicle[k];
+      }
 
       routeDurationCost[k] = model.iif(
           c > 0,
@@ -1263,8 +1286,14 @@ public:
       // latenessTW = model.range(0, nbTwsArray[sequenceVehicle[i]]);
       latenessOfServicesOfVehicle[k] = model.array(model.range(0, c), latenessSelector);
 
+      latenessOfVehicle[k] =
+          model.max(endTimeVehicle[k] - static_cast<lsint>(vehicle.time_window().end()),
+                    0) *
+          vehicle.cost_late_multiplier();
+
       latenessCost[k] =
-          model.iif(c > 0, model.sum(model.range(0, c), latenessSelector), 0);
+          model.iif(c > 0, model.sum(model.range(0, c), latenessSelector), 0) +
+          latenessOfVehicle[k];
 
       capacityConstraintsOfVehicle(k, sequenceVehicle, c);
 
