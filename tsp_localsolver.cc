@@ -1059,22 +1059,23 @@ public:
       if (vehicle.shift_preference() == "force_start") {
         timeLeavingTheWarehouse[k] = model.intVar(twStart, twStart);
         startTimeVehicle[k] = timeLeavingTheWarehouse[k];
-      } else if (maxTwStarts > 0) {
-        timeLeavingTheWarehouse[k] = model.intVar(twStart, maxTwStarts);
-        startTimeVehicle[k] = model.max(
-            timeLeavingTheWarehouse[k],
-            model.iif(c > 0,
-                      model.max(twStart, model.at(twStartsArray, sequenceVehicle[0], 0) -
+      } else {
+        timeLeavingTheWarehouse[k] = model.intVar(twStart, CUSTOM_MAX_INT);
+
+        startTimeVehicle[k] = model.iif(
+            c > 0,
+            model.min(Rest[k][0],
+                      model.max(timeLeavingTheWarehouse[k],
+
+                                model.max(twStart,
+                                          model.at(serviceTwStartsArray,
+                                                   sequenceVehicle[0], 0) -
                                              timesFromWarehouses[vehicle.matrix_index()]
                                                                 [vehicle.start_index()]
                                                                 [sequenceVehicle[0]] -
-                                             serviceSetUpDuration[sequenceVehicle[0]]),
-                      0));
-      } else {
-        timeLeavingTheWarehouse[k] = model.intVar(twStart, twStart);
-        startTimeVehicle[k] = timeLeavingTheWarehouse[k];
+                                              serviceSetUpDuration[sequenceVehicle[0]]))),
+            0);
       }
-
       timeLeavingTheWarehouse[k].setName("timeLeavingTheWarehouse" + vehicle.id());
 
       timeLeavingTheWarehouseConstraint[k] =
