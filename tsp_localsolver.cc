@@ -1100,6 +1100,9 @@ public:
       distanceFromWarehouses[vehicle.matrix_index()][vehicle.start_index()].setName(
           "distanceFromWarehouses" + to_string(k));
       routeDistance[k].setName("routeDistance" + to_string(k));
+
+      routeDistanceCost[k] = model.iif(
+          c > 0,
           (routeDistance[k] -
            model.iif(vehicle.free_approach(),
                      distanceFromWarehouses[vehicle.matrix_index()][vehicle.start_index()]
@@ -1109,7 +1112,8 @@ public:
                      distanceToWarehouses[vehicle.matrix_index()][vehicle.end_index()]
                                          [sequenceVehicle[c - 1]],
                      0)) *
-          vehicle.cost_distance_multiplier();
+              vehicle.cost_distance_multiplier(),
+          0);
       routeDistanceCost[k].setName("routeDistanceCost" + to_string(k));
 
       // End of each visit
