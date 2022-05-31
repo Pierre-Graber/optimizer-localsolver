@@ -143,6 +143,8 @@ public:
   LSExpression vehicleEndIndicies;
   LSExpression vehicleCapacitiesMatrix;
 
+  LSExpression endOfVehicleTimeWindow;
+
   map<string, int64> service_ids_map_;
   vector<map<int, LSExpression>> timesFromWarehouses;
   vector<map<int, LSExpression>> timesToWarehouses;
@@ -713,6 +715,7 @@ public:
       , serviceQuantitiesMatrix(model.array())
       , maxTwStarts(0)
       , vehicleCapacitiesMatrix(model.array())
+      , endOfVehicleTimeWindow(model.array())
       , serviceTwStartsArray(model.array())
       , serviceTwEndsArray(model.array())
       , twAbsoluteEndsArray(model.array())
@@ -750,6 +753,9 @@ public:
     distanceFromWarehouses.resize(problem.matrices_size());
     distanceToWarehouses.resize(problem.matrices_size());
     for (const auto& vehicle : problem.vehicles()) {
+      endOfVehicleTimeWindow.addOperand(
+          vehicle.has_time_window() ? static_cast<lsint>(vehicle.time_window().end())
+                                    : CUSTOM_MAX_INT);
       vector<int> restDurationVec;
       vector<LSExpression> restVec;
       if (!vehicle.rests().empty()) {
@@ -1165,13 +1171,8 @@ public:
 
       LSExpression pauseAfterLastServiceSelector =
           model.createLambdaFunction([&](LSExpression rest_index) {
-            return model.iif(
-                needsPause(
-                    Rest[k][rest_index], endTime[k][c - 1],
-                    // endTime[k][c - 1] +
-                    //     timesToWarehouses[vehicle.matrix_index()][vehicle.end_index()]
-                    //                      [sequenceVehicle[c - 1]]
-                    endOfVehicleTimeWindow[0]),
+            return model.iif(needsPause(Rest[k][rest_index], endTime[k][c - 1],
+                                        endOfVehicleTimeWindow[k]),
                 restDuration[k][rest_index], 0);
           });
 
