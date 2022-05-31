@@ -150,8 +150,8 @@ public:
   vector<map<int, LSExpression>> distanceFromWarehouses;
   vector<map<int, LSExpression>> distanceToWarehouses;
 
-  LSExpression twStartsArray;
-  LSExpression twEndsArray;
+  LSExpression serviceTwStartsArray;
+  LSExpression serviceTwEndsArray;
   LSExpression twAbsoluteEndsArray;
   LSExpression nbTwsArray;
   LSExpression waitNextTWArray;
@@ -183,11 +183,12 @@ public:
   LSExpression twEndSelect(const LSExpression& service, const LSExpression& time) {
     LSExpression timeWindowSelector =
         model.createLambdaFunction([&](LSExpression tw_index) {
-          return model.iif(model.at(twAbsoluteEndsArray, service, tw_index) >= time &&
-                               model.at(twStartsArray, service, tw_index) <= time &&
+          return model.iif(
+              model.at(twAbsoluteEndsArray, service, tw_index) >= time &&
+                  model.at(serviceTwStartsArray, service, tw_index) <= time &&
                                waitNextTWArray[service] == 0,
-                           model.at(twEndsArray, service, tw_index),
-                           model.at(twEndsArray, service, nbTwsArray[service] - 1));
+              model.at(serviceTwEndsArray, service, tw_index),
+              model.at(serviceTwEndsArray, service, nbTwsArray[service] - 1));
         });
     return model.min(model.range(0, nbTwsArray[service]), timeWindowSelector);
   }
@@ -195,11 +196,13 @@ public:
   LSExpression nextStart(const LSExpression& service, const LSExpression& time) {
     LSExpression timeWindowSelector =
         model.createLambdaFunction([&](LSExpression tw_index) {
-          LSExpression twDecisionAbsoluteEnd = model.iif(
-              waitNextTWArray[service] == 1, model.at(twEndsArray, service, tw_index),
+          LSExpression twDecisionAbsoluteEnd =
+              model.iif(waitNextTWArray[service] == 1,
+                        model.at(serviceTwEndsArray, service, tw_index),
               model.at(twAbsoluteEndsArray, service, tw_index));
           return model.iif(
-              twDecisionAbsoluteEnd >= time, model.at(twStartsArray, service, tw_index),
+              twDecisionAbsoluteEnd >= time,
+              model.at(serviceTwStartsArray, service, tw_index),
               model.at(twAbsoluteEndsArray, service, nbTwsArray[service] - 1));
         });
     LSExpression earliestAvailableTime =
@@ -710,8 +713,8 @@ public:
       , serviceQuantitiesMatrix(model.array())
       , maxTwStarts(0)
       , vehicleCapacitiesMatrix(model.array())
-      , twStartsArray(model.array())
-      , twEndsArray(model.array())
+      , serviceTwStartsArray(model.array())
+      , serviceTwEndsArray(model.array())
       , twAbsoluteEndsArray(model.array())
       , waitNextTWArray(model.array())
       , startTimeVehicle(problem.vehicles_size())
@@ -967,10 +970,11 @@ public:
       }
 
       serviceTWAbsoluteEnds.back();
-      twStartsArray.addOperand(
+      serviceTwStartsArray.addOperand(
           model.array(serviceTWStarts.begin(), serviceTWStarts.end()));
-      twStartsArray.setName("TW starts :");
-      twEndsArray.addOperand(model.array(serviceTWEnds.begin(), serviceTWEnds.end()));
+      serviceTwStartsArray.setName("TW starts :");
+      serviceTwEndsArray.addOperand(
+          model.array(serviceTWEnds.begin(), serviceTWEnds.end()));
       twAbsoluteEndsArray.addOperand(
           model.array(serviceTWAbsoluteEnds.begin(), serviceTWAbsoluteEnds.end()));
 
@@ -1394,10 +1398,10 @@ public:
       cout << "number of time windows " << nbTwsArray.getArrayValue().toString() << endl;
 
       cout << " Services Time Window Starts Array :  "
-           << twStartsArray.getArrayValue().toString() << endl;
+           << serviceTwStartsArray.getArrayValue().toString() << endl;
 
       cout << " Services Time Window Ends Array :  "
-           << twEndsArray.getArrayValue().toString() << endl;
+           << serviceTwEndsArray.getArrayValue().toString() << endl;
       cout << " Services Time Window Absolute End Array :  "
            << twAbsoluteEndsArray.getArrayValue().toString() << endl;
 
