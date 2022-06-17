@@ -190,7 +190,7 @@ public:
           return model.iif(
               model.at(twAbsoluteEndsArray, service, tw_index) >= time &&
                   model.at(serviceTwStartsArray, service, tw_index) <= time &&
-                               waitNextTWArray[service] == 0,
+                  waitNextTWArray[service] == 0,
               model.at(serviceTwEndsArray, service, tw_index),
               model.at(serviceTwEndsArray, service, nbTwsArray[service] - 1));
         });
@@ -203,7 +203,7 @@ public:
           LSExpression twDecisionAbsoluteEnd =
               model.iif(waitNextTWArray[service] == 1,
                         model.at(serviceTwEndsArray, service, tw_index),
-              model.at(twAbsoluteEndsArray, service, tw_index));
+                        model.at(twAbsoluteEndsArray, service, tw_index));
           return model.iif(
               twDecisionAbsoluteEnd >= time,
               model.at(serviceTwStartsArray, service, tw_index),
@@ -1068,9 +1068,9 @@ public:
                                 model.max(twStart,
                                           model.at(serviceTwStartsArray,
                                                    sequenceVehicle[0], 0) -
-                                             timesFromWarehouses[vehicle.matrix_index()]
-                                                                [vehicle.start_index()]
-                                                                [sequenceVehicle[0]] -
+                                              timesFromWarehouses[vehicle.matrix_index()]
+                                                                 [vehicle.start_index()]
+                                                                 [sequenceVehicle[0]] -
                                               serviceSetUpDuration[sequenceVehicle[0]]))),
             0);
       }
@@ -1178,7 +1178,7 @@ public:
           model.createLambdaFunction([&](LSExpression rest_index) {
             return model.iif(needsPause(Rest[k][rest_index], endTime[k][c - 1],
                                         endOfVehicleTimeWindow[k]),
-                restDuration[k][rest_index], 0);
+                             restDuration[k][rest_index], 0);
           });
 
       LSExpression pauseAfterLastService = model.iif(
@@ -1204,13 +1204,13 @@ public:
       }
 
       if (vehicle.rests_size() == 0) {
-      routeDuration[k] =
-          model.iif(c > 0,
+        routeDuration[k] =
+            model.iif(c > 0,
                       endTime[k][c - 1] +
-                        timesToWarehouses[vehicle.matrix_index()][vehicle.end_index()]
-                                         [sequenceVehicle[c - 1]] -
-                        startTimeVehicle[k],
-                    0);
+                          timesToWarehouses[vehicle.matrix_index()][vehicle.end_index()]
+                                           [sequenceVehicle[c - 1]] -
+                          startTimeVehicle[k],
+                      0);
       } else {
         routeDuration[k] = endTimeVehicle[k] - startTimeVehicle[k];
       }
