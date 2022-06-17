@@ -1657,13 +1657,14 @@ int main(int argc, char** argv) {
   }
   localsolver_result::Result* result = new localsolver_result::Result;
   localsolver_VRP model(problem);
-  auto t1 = high_resolution_clock::now();
+  auto startExecution = high_resolution_clock::now();
   model.createModelAndSolve(result);
-  auto t2 = high_resolution_clock::now();
-  duration<float, std::milli> ms_double = t2 - t1;
+  auto endExecution = high_resolution_clock::now();
 
   if (result != nullptr) {
-    result->set_duration(ms_double.count());
+    result->set_duration(
+        duration_cast<std::chrono::milliseconds>(endExecution - startExecution).count() /
+        1000);
     std::ofstream output(absl::GetFlag(FLAGS_solution_file),
                          std::ios::trunc | std::ios::binary);
     if (!result->SerializeToOstream(&output)) {
