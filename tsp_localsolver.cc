@@ -448,14 +448,9 @@ public:
       for (auto const& route : problem.routes()) {
         int vehicle_index = IdIndex(route.vehicle_id(), vehicle_ids_map_);
         LSExpression sequenceVehicle = serviceSequences[vehicle_index];
-        // cout << "service_id :" << route.service_ids(0) << endl;
         for (int index_of_service_in_route = 0;
              index_of_service_in_route < route.service_ids_size() - 1;
              index_of_service_in_route++) {
-          // model.constraint(model.contains(sequenceVehicle, service));
-          // model.constraint(model.indexOf(sequenceVehicle, service) ==
-          //                  index_of_service_in_route);
-
           LSExpression sequenceContainsCurrentService = model.contains(
               sequenceVehicle,
               static_cast<lsint>(IdIndex(route.service_ids(index_of_service_in_route),
@@ -468,21 +463,8 @@ public:
               sequenceVehicle,
               static_cast<lsint>(IdIndex(route.service_ids(index_of_service_in_route),
                                          service_ids_map_)));
-          LSExpression indexOfNextServiceInSequence = model.indexOf(
-              sequenceVehicle,
-              static_cast<lsint>(IdIndex(route.service_ids(index_of_service_in_route + 1),
-                                         service_ids_map_)));
           model.constraint(sequenceContainsCurrentService == sequenceContainsNextService);
           model.constraint(indexOfCurrentServiceInSequence == index_of_service_in_route);
-          // model.constraint(model.iif(
-          //     sequenceContainsCurrentService,
-          //     indexOfCurrentServiceInSequence + 1 == indexOfNextServiceInSequence,
-          //     true));
-
-          // model.constraint(sequenceContainsCurrentService);
-          // model.constraint(sequenceContainsNextService);
-          // model.constraint(indexOfCurrentServiceInSequence + 1 ==
-          //                  indexOfNextServiceInSequence);
         }
       }
     }
@@ -613,18 +595,12 @@ public:
 
     for (int route_index = 0; route_index < problem.vehicles_size(); route_index++) {
       if (vehicleUsed[route_index].getValue() == 1) {
-      LSArray beginTimeArray = beginTime[route_index].getArrayValue();
-      LSArray endTimeArray = endTime[route_index].getArrayValue();
-      LSArray latenessServicesOfVehicleArray =
-          latenessOfServicesOfVehicle[route_index].getArrayValue();
-      LSArray timeToWareHouseArray =
-          timesToWarehouses[problem.vehicles(route_index).matrix_index()]
-                           [problem.vehicles(route_index).end_index()]
-                               .getArrayValue();
-      LSCollection servicesCollection =
-          servicesSequence[route_index].getCollectionValue();
-      LSArray restBeginTimeArray = Rest[route_index].getArrayValue();
-      LSArray restDurationArray = restDuration[route_index].getArrayValue();
+        LSArray beginTimeArray = beginTime[route_index].getArrayValue();
+        LSArray latenessServicesOfVehicleArray =
+            latenessOfServicesOfVehicle[route_index].getArrayValue();
+        LSCollection servicesCollection =
+            servicesSequence[route_index].getCollectionValue();
+        LSArray restBeginTimeArray = Rest[route_index].getArrayValue();
         localsolver_result::Route* route = result->add_routes();
         if (problem.vehicles(route_index).start_index() != -1) {
           localsolver_result::Activity* start_route = route->add_activities();
@@ -683,18 +659,14 @@ public:
         }
       } else {
         localsolver_result::Route* route = result->add_routes();
-        // if (problem.vehicles(route_index).start_index() != -1) {
-          localsolver_result::Activity* start_route = route->add_activities();
-          start_route->set_type("start");
-          start_route->set_index(-1);
-          start_route->set_start_time(startTimeVehicle[route_index].getIntValue());
-        // }
-        // if (problem.vehicles(route_index).end_index() != -1) {
-          localsolver_result::Activity* end_route = route->add_activities();
-          end_route->set_type("end");
-          end_route->set_index(-1);
+        localsolver_result::Activity* start_route = route->add_activities();
+        start_route->set_type("start");
+        start_route->set_index(-1);
+        start_route->set_start_time(startTimeVehicle[route_index].getIntValue());
+        localsolver_result::Activity* end_route = route->add_activities();
+        end_route->set_type("end");
+        end_route->set_index(-1);
         end_route->set_start_time(startTimeVehicle[route_index].getIntValue());
-        // }
       }
     }
     result->set_iterations(nbOfIterations);
@@ -1326,8 +1298,6 @@ public:
     LSExpression totalLatenessCost =
         model.max(0, model.sum(latenessCost.begin(), latenessCost.end()));
     totalLatenessCost.setName("total Lateness Cost");
-
-    LSExpression totalWaitingTime = model.sum(waitingTime.begin(), waitingTime.end());
 
     LSExpression exclusionCostCumulator = model.createLambdaFunction(
         [&](LSExpression i) { return serviceExclusionCost[unassignedServices[i]]; });
