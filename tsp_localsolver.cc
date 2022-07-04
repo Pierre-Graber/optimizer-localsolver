@@ -1046,6 +1046,7 @@ public:
                                               serviceSetUpDuration[sequenceVehicle[0]]))),
             0);
       }
+
       timeLeavingTheWarehouse[k].setName("timeLeavingTheWarehouse" + vehicle.id());
 
       timeLeavingTheWarehouseConstraint[k] =

@@ -1,0 +1,643 @@
+{
+    "options": {
+        "name": "try1",
+        "hash": "bfdee19129bb23dbab796e188e66346c6e88a7db",
+        "num_rep": 1,
+        "max_con": 12,
+        "server": "local",
+        "api_key": "localsolver",
+        "ins_ext": "json",
+        "ins_fol": "../benchmark/instances/",
+        "date": "2022-03-14",
+        "continue": false,
+        "help": false,
+        "ins_fol_given": true,
+        "name_given": true,
+        "hash_given": true,
+        "num_rep_given": true,
+        "api_key_given": true
+    },
+    "stats": {
+        "matrixed-2independent-vehicles-tsp.json": {
+            "name": {
+                "nbServices": 544,
+                "cost": 163661.0,
+                "unassigned": 0,
+                "total_distance": 1638308,
+                "total_time": 163661
+            }
+        },
+        "matrixed-CVRP-2.json": {
+            "name": {
+                "nbServices": 354,
+                "cost": 10163.0,
+                "unassigned": 274,
+                "total_distance": 198213,
+                "total_time": 10163
+            }
+        },
+        "matrixed-CVRP-2.jsonwith_max_split.json": {
+            "name": {
+                "nbServices": 354,
+                "cost": 10316.0,
+                "unassigned": 274,
+                "total_distance": 201467,
+                "total_time": 10316
+            }
+        },
+        "matrixed-CVRP-3.json": {
+            "name": {
+                "nbServices": 436,
+                "cost": 10946.0,
+                "unassigned": 356,
+                "total_distance": 200291,
+                "total_time": 10946
+            }
+        },
+        "matrixed-CVRP-3.jsonwith_max_split.json": {
+            "name": {
+                "nbServices": 436,
+                "cost": 11236.0,
+                "unassigned": 356,
+                "total_distance": 229362,
+                "total_time": 11236
+            }
+        },
+        "matrixed-CVRP-rest-2.json": {
+            "name": {
+                "nbServices": 99,
+                "cost": 182489.00022125244,
+                "unassigned": 0,
+                "total_distance": 313199,
+                "total_time": 177296
+            }
+        },
+        "matrixed-CVRP-rest.json": {
+            "name": {
+                "nbServices": 105,
+                "cost": 105762.0,
+                "unassigned": 49,
+                "total_distance": 454208,
+                "total_time": 105755
+            }
+        },
+        "matrixed-CVRP.json": {
+            "name": {
+                "nbServices": 74,
+                "cost": 133729.0,
+                "unassigned": 0,
+                "total_distance": 843318,
+                "total_time": 127933
+            }
+        },
+        "matrixed-CVRPTW-2.json": {
+            "name": {
+                "nbServices": 37,
+                "cost": 76015.90002441406,
+                "unassigned": 0,
+                "total_distance": 537463,
+                "total_time": 75103
+            }
+        },
+        "matrixed-CVRPTW-3.json": {
+            "name": {
+                "nbServices": 129,
+                "cost": 228278.60011291504,
+                "unassigned": 0,
+                "total_distance": 1441969,
+                "total_time": 225143
+            }
+        },
+        "matrixed-CVRPTW.json": {
+            "name": {
+                "nbServices": 50,
+                "cost": 134534.6000366211,
+                "unassigned": 0,
+                "total_distance": 273759,
+                "total_time": 133598
+            }
+        },
+        "matrixed-HMCVRP-ssTW.json": {
+            "name": {
+                "nbServices": 318,
+                "cost": 228011.30018615723,
+                "unassigned": 51,
+                "total_distance": 1655016,
+                "total_time": 223190
+            }
+        },
+        "matrixed-HVRP.json": {
+            "name": {
+                "nbServices": 28,
+                "cost": 43794.0,
+                "unassigned": 0,
+                "total_distance": 436463,
+                "total_time": 43794
+            }
+        },
+        "matrixed-HVRPTW-2.json": {
+            "name": {
+                "nbServices": 33,
+                "cost": 57841.40000152588,
+                "unassigned": 3,
+                "total_distance": 87158,
+                "total_time": 57743
+            }
+        },
+        "matrixed-HVRPTW-3.json": {
+            "name": {
+                "nbServices": 31,
+                "cost": 83195.5000038147,
+                "unassigned": 0,
+                "total_distance": 787796,
+                "total_time": 83140
+            }
+        },
+        "matrixed-HVRPTW.json": {
+            "name": {
+                "nbServices": 423,
+                "cost": 235932.0,
+                "unassigned": 222,
+                "total_distance": 1997270,
+                "total_time": 235932
+            }
+        },
+        "matrixed-HVRPTW.jsonwith_max_split.json": {
+            "name": {
+                "nbServices": 423,
+                "cost": 214516.0,
+                "unassigned": 296,
+                "total_distance": 2823387,
+                "total_time": 214516
+            }
+        },
+        "matrixed-HVRPmTW.json": {
+            "name": {
+                "nbServices": 2323,
+                "cost": 62724304.25842285,
+                "unassigned": 90,
+                "total_distance": 10727848,
+                "total_time": 1187882
+            }
+        },
+        "matrixed-HVRPmTW.jsonwith_max_split.json": {
+            "name": {
+                "nbServices": 2323,
+                "cost": 68143755.6630249,
+                "unassigned": 10,
+                "total_distance": 13860770,
+                "total_time": 1450688
+            }
+        },
+        "matrixed-PDP-Skills-2.json": {
+            "name": {
+                "nbServices": 170,
+                "cost": 467237.0,
+                "unassigned": 12,
+                "total_distance": 4736476,
+                "total_time": 467237
+            }
+        },
+        "matrixed-PDP-Skills-3.json": {
+            "name": {
+                "nbServices": 78,
+                "cost": 340594.0,
+                "unassigned": 0,
+                "total_distance": 3262460,
+                "total_time": 340594
+            }
+        },
+        "matrixed-PDP-Skills-4.json": {
+            "name": {
+                "nbServices": 14,
+                "cost": 82561.0,
+                "unassigned": 2,
+                "total_distance": 909242,
+                "total_time": 82561
+            }
+        },
+        "matrixed-PDP-Skills.json": {
+            "name": {
+                "nbServices": 78,
+                "cost": 346172.0,
+                "unassigned": 0,
+                "total_distance": 3367706,
+                "total_time": 346172
+            }
+        },
+        "matrixed-PDP-mCVRPTW-sequence-positions-skills.json": {
+            "name": {
+                "nbServices": 384,
+                "cost": 6265.952759742737,
+                "unassigned": 5,
+                "total_distance": 7329699,
+                "total_time": 1173490
+            }
+        },
+        "matrixed-PDP-mtw-skills-2.json": {
+            "name": {
+                "nbServices": 148,
+                "cost": 709698.0,
+                "unassigned": 16,
+                "total_distance": 15492556,
+                "total_time": 1088169
+            }
+        },
+        "matrixed-PDP-mtw-skills.json": {
+            "name": {
+                "nbServices": 148,
+                "cost": 3827579.0,
+                "unassigned": 8,
+                "total_distance": 13151346,
+                "total_time": 3827579
+            }
+        },
+        "matrixed-PDPTW-skills.json": {
+            "name": {
+                "nbServices": 34,
+                "cost": 841.2910812957764,
+                "unassigned": 0,
+                "total_distance": 800925,
+                "total_time": 65936
+            }
+        },
+        "matrixed-PDmCVRPTW-Skills.json": {
+            "name": {
+                "nbServices": 985,
+                "cost": 16568.930123329163,
+                "unassigned": 165,
+                "total_distance": 19344529,
+                "total_time": 2762808
+            }
+        },
+        "matrixed-VRP-rest-work-duration-2.json": {
+            "name": {
+                "nbServices": 270,
+                "cost": 451033.40145874023,
+                "unassigned": 1,
+                "total_distance": 891191,
+                "total_time": 421718
+            }
+        },
+        "matrixed-VRP-rest-work-duration-3.json": {
+            "name": {
+                "nbServices": 56,
+                "cost": 56402.0,
+                "unassigned": 1,
+                "total_distance": 653938,
+                "total_time": 56402
+            }
+        },
+        "matrixed-VRP-rest-work-duration.json": {
+            "name": {
+                "nbServices": 270,
+                "cost": 453515.10137939453,
+                "unassigned": 0,
+                "total_distance": 1022002,
+                "total_time": 431895
+            }
+        },
+        "matrixed-VRP-sstw-workduration.json": {
+            "name": {
+                "nbServices": 584,
+                "cost": 8238.384454727173,
+                "unassigned": 1,
+                "total_distance": 7281280,
+                "total_time": 761716
+            }
+        },
+        "matrixed-VRPTW.json": {
+            "name": {
+                "nbServices": 73,
+                "cost": 83271.0,
+                "unassigned": 0,
+                "total_distance": 1091940,
+                "total_time": 82596
+            }
+        },
+        "matrixed-bicycle-tsp.json": {
+            "name": {
+                "nbServices": 297,
+                "cost": 68282.0,
+                "unassigned": 0,
+                "total_distance": 31856,
+                "total_time": 68282
+            }
+        },
+        "matrixed-mCVRP-rests.json": {
+            "name": {
+                "nbServices": 88,
+                "cost": 105077.0,
+                "unassigned": 34,
+                "total_distance": 468050,
+                "total_time": 105077
+            }
+        },
+        "matrixed-mCVRPTW-2.json": {
+            "name": {
+                "nbServices": 201,
+                "cost": 291061.7000389099,
+                "unassigned": 0,
+                "total_distance": 449656,
+                "total_time": 290357
+            }
+        },
+        "matrixed-mCVRPTW-3.json": {
+            "name": {
+                "nbServices": 69,
+                "cost": 1055918.0,
+                "unassigned": 0,
+                "total_distance": 1055895,
+                "total_time": 86481
+            }
+        },
+        "matrixed-mCVRPTW-4.json": {
+            "name": {
+                "nbServices": 432,
+                "cost": 499007.0,
+                "unassigned": 1,
+                "total_distance": 7609826,
+                "total_time": 499007
+            }
+        },
+        "matrixed-mCVRPTW-5.json": {
+            "name": {
+                "nbServices": 93,
+                "cost": 149780.40013456345,
+                "unassigned": 0,
+                "total_distance": 232959,
+                "total_time": 147426
+            }
+        },
+        "matrixed-mCVRPTW-6.json": {
+            "name": {
+                "nbServices": 123,
+                "cost": 115850.9000005722,
+                "unassigned": 1,
+                "total_distance": 837834,
+                "total_time": 115835
+            }
+        },
+        "matrixed-mCVRPTW.json": {
+            "name": {
+                "nbServices": 172,
+                "cost": 312500.2003135681,
+                "unassigned": 0,
+                "total_distance": 530116,
+                "total_time": 305836
+            }
+        },
+        "matrixed-mCVRPmTW-skills-2.json": {
+            "name": {
+                "nbServices": 390,
+                "cost": 241636.0,
+                "unassigned": 70,
+                "total_distance": 1906077,
+                "total_time": 241636
+            }
+        },
+        "matrixed-mCVRPmTW-skills-3.json": {
+            "name": {
+                "nbServices": 1340,
+                "cost": 43956510.30334473,
+                "unassigned": 1,
+                "total_distance": 3655601,
+                "total_time": 773708
+            }
+        },
+        "matrixed-mCVRPmTW-skills-3.jsonwith_max_split.json": {
+            "name": {
+                "nbServices": 1340,
+                "cost": 43957629.20397949,
+                "unassigned": 1,
+                "total_distance": 3619914,
+                "total_time": 776609
+            }
+        },
+        "matrixed-mCVRPmTW-skills-4.json": {
+            "name": {
+                "nbServices": 1688,
+                "cost": 52258669.00488281,
+                "unassigned": 1,
+                "total_distance": 5216890,
+                "total_time": 997796
+            }
+        },
+        "matrixed-mCVRPmTW-skills-4.jsonwith_max_split.json": {
+            "name": {
+                "nbServices": 1688,
+                "cost": 53280975.75463867,
+                "unassigned": 1,
+                "total_distance": 5391595,
+                "total_time": 1011367
+            }
+        },
+        "matrixed-mCVRPmTW-skills-5.json": {
+            "name": {
+                "nbServices": 1184,
+                "cost": 101106926.82019043,
+                "unassigned": 21,
+                "total_distance": 19422702,
+                "total_time": 2135779
+            }
+        },
+        "matrixed-mCVRPmTW-skills-5.jsonwith_max_split.json": {
+            "name": {
+                "nbServices": 1184,
+                "cost": 104201600.91564941,
+                "unassigned": 18,
+                "total_distance": 19931790,
+                "total_time": 2204998
+            }
+        },
+        "matrixed-mCVRPmTW-skills.json": {
+            "name": {
+                "nbServices": 390,
+                "cost": 235080.0,
+                "unassigned": 75,
+                "total_distance": 1933227,
+                "total_time": 235080
+            }
+        },
+        "matrixed-medium-TSPTW.json": {
+            "name": {
+                "nbServices": 133,
+                "cost": 22308.0,
+                "unassigned": 50,
+                "total_distance": 75679,
+                "total_time": 22308
+            }
+        },
+        "matrixed-semi-soft-tspmtw.json": {
+            "name": {
+                "nbServices": 409,
+                "cost": 102712.2001953125,
+                "unassigned": 314,
+                "total_distance": 501190,
+                "total_time": 89394
+            }
+        },
+        "matrixed-semi-soft-tspmtw.jsonwith_max_split.json": {
+            "name": {
+                "nbServices": 409,
+                "cost": 102861.7001953125,
+                "unassigned": 311,
+                "total_distance": 479161,
+                "total_time": 89509
+            }
+        },
+        "matrixed-small-CVRPmTW-5.json": {
+            "name": {
+                "nbServices": 25,
+                "cost": 49753.600006103516,
+                "unassigned": 0,
+                "total_distance": 299936,
+                "total_time": 49585
+            }
+        },
+        "matrixed-small-TSPTW-2.json": {
+            "name": {
+                "nbServices": 22,
+                "cost": 18759.0,
+                "unassigned": 0,
+                "total_distance": 215516,
+                "total_time": 18759
+            }
+        },
+        "matrixed-small-TSPTW-3.json": {
+            "name": {
+                "nbServices": 19,
+                "cost": 27514.0,
+                "unassigned": 0,
+                "total_distance": 426432,
+                "total_time": 27514
+            }
+        },
+        "matrixed-small-TSPTW-4.json": {
+            "name": {
+                "nbServices": 37,
+                "cost": 31682.0,
+                "unassigned": 0,
+                "total_distance": 341192,
+                "total_time": 31682
+            }
+        },
+        "matrixed-small-TSPTW-5.json": {
+            "name": {
+                "nbServices": 51,
+                "cost": 28794.0,
+                "unassigned": 0,
+                "total_distance": 347312,
+                "total_time": 28794
+            }
+        },
+        "matrixed-small-TSPTW-6.json": {
+            "name": {
+                "nbServices": 62,
+                "cost": 29532.0,
+                "unassigned": 0,
+                "total_distance": 358732,
+                "total_time": 29532
+            }
+        },
+        "matrixed-small-TSPTW-7.json": {
+            "name": {
+                "nbServices": 86,
+                "cost": 32080.0,
+                "unassigned": 6,
+                "total_distance": 302179,
+                "total_time": 32080
+            }
+        },
+        "matrixed-small-TSPTW.json": {
+            "name": {
+                "nbServices": 13,
+                "cost": 26453.0,
+                "unassigned": 0,
+                "total_distance": 405656,
+                "total_time": 26453
+            }
+        },
+        "matrixed-small-VRPmTW-2.json": {
+            "name": {
+                "nbServices": 12,
+                "cost": 19531.0,
+                "unassigned": 0,
+                "total_distance": 381057,
+                "total_time": 26635
+            }
+        },
+        "matrixed-small-VRPmTW-3.json": {
+            "name": {
+                "nbServices": 11,
+                "cost": 25112.0,
+                "unassigned": 0,
+                "total_distance": 588964,
+                "total_time": 35351
+            }
+        },
+        "matrixed-small-VRPmTW-4.json": {
+            "name": {
+                "nbServices": 22,
+                "cost": 27948.0,
+                "unassigned": 0,
+                "total_distance": 446545,
+                "total_time": 35537
+            }
+        },
+        "matrixed-small-VRPmTW-5.json": {
+            "name": {
+                "nbServices": 20,
+                "cost": 30184.0,
+                "unassigned": 0,
+                "total_distance": 488718,
+                "total_time": 38037
+            }
+        },
+        "matrixed-small-VRPmTW.json": {
+            "name": {
+                "nbServices": 14,
+                "cost": 17286.0,
+                "unassigned": 0,
+                "total_distance": 337850,
+                "total_time": 23936
+            }
+        },
+        "matrixed-vrp-work-duration-rests-skills.json": {
+            "name": {
+                "nbServices": 129,
+                "cost": 213924.8005142212,
+                "unassigned": 0,
+                "total_distance": 547527,
+                "total_time": 206096
+            }
+        },
+        "matrixed-vrp-work-duration.json": {
+            "name": {
+                "nbServices": 666,
+                "cost": 12341779.250488281,
+                "unassigned": 0,
+                "total_distance": 1298681,
+                "total_time": 276836
+            }
+        },
+        "matrixed-vrptw-work-duration.json": {
+            "name": {
+                "nbServices": 667,
+                "cost": 12994928.0,
+                "unassigned": 102,
+                "total_distance": 994781,
+                "total_time": 281195
+            }
+        },
+        "matrixed-vrptw-work-duration.jsonwith_max_split.json": {
+            "name": {
+                "nbServices": 667,
+                "cost": 13295095.0,
+                "unassigned": 100,
+                "total_distance": 1294954,
+                "total_time": 287705
+            }
+        }
+    }
+}

@@ -1,0 +1,131 @@
+{
+    "options": {
+        "name": "try1",
+        "hash": "bfdee19129bb23dbab796e188e66346c6e88a7db",
+        "num_rep": 1,
+        "max_con": 12,
+        "server": "local",
+        "api_key": "localsolver",
+        "ins_ext": "json",
+        "ins_fol": "../benchmark/instances/",
+        "date": "2022-03-14",
+        "output": "RUN_2022-03-14_local_localsolver.json",
+        "continue": false,
+        "help": false,
+        "ins_fol_given": true,
+        "name_given": true,
+        "hash_given": true,
+        "num_rep_given": true,
+        "api_key_given": true
+    },
+    "stats": {
+        "../benchmark/instances/ortools_one_route_with_rest.json": {
+            "9cffca92637bcf48fc56bc8343528ec8": {
+                "n_unassigned": 66,
+                "total_unassigned_duration": 22800,
+                "n_routes": 0,
+                "elapsed": 0.0,
+                "total_distance": 0,
+                "total_travel_time": 0,
+                "total_time": 0,
+                "costs": 0,
+                "cost_details": {
+                    "total": 0,
+                    "fixed": 0,
+                    "time": 0,
+                    "distance": 0,
+                    "value": 0,
+                    "lateness": 0,
+                    "overload": 0
+                },
+                "n_iterations": 0
+            }
+        },
+        "../benchmark/instances/ortools_global_ten_routes_without_rest.json": {
+            "311f9ea1f9378844c44ca4c445a13c52": {
+                "n_unassigned": 81,
+                "total_unassigned_duration": 48180,
+                "n_routes": 0,
+                "elapsed": 0.0,
+                "total_distance": 0,
+                "total_travel_time": 0,
+                "total_time": 0,
+                "costs": 0,
+                "cost_details": {
+                    "total": 0,
+                    "fixed": 0,
+                    "time": 0,
+                    "distance": 0,
+                    "value": 0,
+                    "lateness": 0,
+                    "overload": 0
+                },
+                "n_iterations": 0
+            }
+        },
+        "../benchmark/instances/ortools_one_route_without_rest_2.json": {
+            "20228cef608a520f08946e656900749a": {
+                "n_unassigned": 107,
+                "total_unassigned_duration": 0,
+                "n_routes": 0,
+                "elapsed": 0.0,
+                "total_distance": 0,
+                "total_travel_time": 0,
+                "total_time": 0,
+                "costs": 0,
+                "cost_details": {
+                    "total": 0,
+                    "fixed": 0,
+                    "time": 0,
+                    "distance": 0,
+                    "value": 0,
+                    "lateness": 0,
+                    "overload": 0
+                },
+                "n_iterations": 0
+            }
+        },
+        "../benchmark/instances/instance_fr_tv1.json": {
+            "0a0271ccc6a83b1d668ad7d48dc8dee7": {
+                "n_unassigned": 190,
+                "total_unassigned_duration": 3800,
+                "n_routes": 0,
+                "elapsed": 0.0,
+                "total_distance": 0,
+                "total_travel_time": 0,
+                "total_time": 0,
+                "costs": 0,
+                "cost_details": {
+                    "total": 0,
+                    "fixed": 0,
+                    "time": 0,
+                    "distance": 0,
+                    "value": 0,
+                    "lateness": 0,
+                    "overload": 0
+                },
+                "n_iterations": 0
+            }
+        }
+    },
+    "posted_job_ids": {
+        "../benchmark/instances/ortools_one_route_with_rest.json": [
+            "9cffca92637bcf48fc56bc8343528ec8"
+        ],
+        "../benchmark/instances/ortools_global_ten_routes_without_rest.json": [
+            "311f9ea1f9378844c44ca4c445a13c52"
+        ],
+        "../benchmark/instances/ortools_one_route_without_rest_2.json": [
+            "20228cef608a520f08946e656900749a"
+        ],
+        "../benchmark/instances/instance_fr_tv1.json": [
+            "0a0271ccc6a83b1d668ad7d48dc8dee7"
+        ]
+    },
+    "errored_job_ids": {
+        "../benchmark/instances/ortools_one_route_with_rest.json": {},
+        "../benchmark/instances/ortools_global_ten_routes_without_rest.json": {},
+        "../benchmark/instances/ortools_one_route_without_rest_2.json": {},
+        "../benchmark/instances/instance_fr_tv1.json": {}
+    }
+}
